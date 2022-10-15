@@ -1,0 +1,11 @@
+const AbstractModel = require('./AbstractModel')
+
+class {{modelName}} extends AbstractModel {
+  constructor() {
+    super()
+  }
+
+  {{}}
+}
+
+module.exports = {{modelName}}

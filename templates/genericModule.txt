@@ -1,0 +1,2 @@
+{{importsStr}}
+module.exports = {{exportStr}}
