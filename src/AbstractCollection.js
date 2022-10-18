@@ -26,9 +26,6 @@ function getInputStrings(queryName) {
   return [inputsTopLevel, inputsInner]
 }
 
-// TODO: inputs is going to be in the form of {param: value}, but it needs to be converted to {param: type}
-//  where is this type definition going to come from? And how will it be stored?
-
 class AbstractCollection {
   /**
    * @param {string?} fragmentName
@@ -40,56 +37,71 @@ class AbstractCollection {
   // -----------------------------------------------------------------------------------------------------------
   // the default queries that we know AppSync generates
   // -----------------------------------------------------------------------------------------------------------
-  /**
-   * @param {*?} filter
-   * @returns {Promise<Array<*>>}
-   */
-  listAll(filter) {
-    return this._list(`list${this.constructor.name}`, {filter: filter})
-  }
+  // /**
+  //  * @param {*?} inputs
+  //  * @returns {Promise<*>}
+  //  */
+  // listAll(inputs) {
+  //   return this._list(`list${this.constructor.name}`, inputs, this.fragmentName)
+  // }
+  //
+  // /**
+  //  * @param {*} inputs
+  //  * @returns {Promise<*>}
+  //  */
+  // get(inputs) {
+  //   return this._get(`get${this.constructor.name}`, inputs, this.fragmentName)
+  // }
+  //
+  // /**
+  //  * @param {*} inputs
+  //  * @returns {Promise<*>}
+  //  */
+  // create(inputs) {
+  //   return this._mutate(
+  //     `create${this.constructor.name}`,
+  //     inputs,
+  //     this.fragmentName,
+  //   )
+  // }
+  //
+  // /**
+  //  * @param {*} inputs
+  //  * @returns {Promise<*>}
+  //  */
+  // update(inputs) {
+  //   return this._mutate(
+  //     `update${this.constructor.name}`,
+  //     inputs,
+  //     this.fragmentName,
+  //   )
+  // }
+  //
+  // /**
+  //  * @param {*} inputs
+  //  * @returns {Promise<*>}
+  //  */
+  // delete(inputs) {
+  //   return this._mutate(
+  //     `delete${this.constructor.name}`,
+  //     inputs,
+  //     this.fragmentName,
+  //   )
+  // }
 
-  /**
-   * @param {string} id
-   * @returns {Promise<*>}
-   */
-  get(id) {
-    return this._get(`get${this.constructor.name}`, {id: id})
-  }
-
-  /**
-   * @param {*} payload
-   * @returns {Promise<*>}
-   */
-  create(payload) {
-    return this._mutate(`create${this.constructor.name}`, {input: payload})
-  }
-
-  /**
-   * @param {*} payload
-   * @returns {Promise<*>}
-   */
-  update(payload) {
-    return this._mutate(`update${this.constructor.name}`, {input: payload})
-  }
-
-  /**
-   * @param {string} id
-   * @returns {Promise<*>}
-   */
-  delete(id) {
-    return this._mutate(`delete${this.constructor.name}`, {input: {id: id}})
-  }
   // -----------------------------------------------------------------------------------------------------------
+  // Protected functions
 
   /**
    * @param {string} queryName
    * @param {*} inputs
+   * @param {string} fragmentName
    * @returns {Promise<Array<*>>}
    * @protected
    */
-  _list(queryName, inputs) {
+  _list(queryName, inputs, fragmentName) {
     return GQLQueryHelper.Instance().queryAll(
-      this._buildListQuery(queryName, this.fragmentName),
+      this._buildListQuery(queryName, fragmentName),
       inputs,
     )
   }
@@ -97,12 +109,13 @@ class AbstractCollection {
   /**
    * @param {string} queryName
    * @param {*} inputs
+   * @param {string} fragmentName
    * @returns {Promise<*>}
    * @protected
    */
-  _get(queryName, inputs) {
+  _get(queryName, inputs, fragmentName) {
     return GQLQueryHelper.Instance().queryOnce(
-      this._buildGetQuery(queryName, this.fragmentName),
+      this._buildGetQuery(queryName, fragmentName),
       inputs,
     )
   }
@@ -110,12 +123,13 @@ class AbstractCollection {
   /**
    * @param {string} queryName
    * @param {*} inputs
+   * @param {string} fragmentName
    * @returns {Promise<*>}
    * @protected
    */
-  _mutate(queryName, inputs) {
+  _mutate(queryName, inputs, fragmentName) {
     return GQLQueryHelper.Instance().executeMutation(
-      this._buildMutation(queryName, this.fragmentName),
+      this._buildMutation(queryName, fragmentName),
       inputs,
     )
   }
@@ -180,11 +194,14 @@ class AbstractCollection {
     `
   }
 
+  // -----------------------------------------------------------------------------------------------------------
+  // Static functions
+
   /**
-   * @param {string} fragmentName
+   * @param {string?} fragmentName
    * @returns {AbstractCollection}
    */
   static as(fragmentName) {
-    return new AbstractCollection(fragmentName)
+    return new this(fragmentName)
   }
 }

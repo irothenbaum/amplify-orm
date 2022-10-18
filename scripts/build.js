@@ -2,6 +2,10 @@ const path = require('path')
 const OutputDefinition = require('../models/OutputDefinition')
 
 async function build() {
+  const config = require(path.join(process.cwd(), process.argv[2]))
+
+  config.srcSchema
+
   const pathToSrcSchema = path.join(
     process.cwd(),
     process.argv[2],
@@ -15,7 +19,10 @@ async function build() {
   )
   console.log('Loading from ' + pathToSrcSchema)
 
-  const def = OutputDefinition.getFromSchema(pathToSrcSchema, pathToBuiltSchema)
+  const def = OutputDefinition.getFromSchema(
+    config.srcSchema,
+    config.buildSchema,
+  )
 
   console.log(def)
 

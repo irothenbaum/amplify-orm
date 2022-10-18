@@ -1,0 +1,28 @@
+const fragments = require('./fragments')
+const AbstractCollection = require('./AbstractCollection')
+
+class {{collectionName}} extends AbstractCollection {
+  constructor() {
+    super()
+  }
+
+  /**
+   * @param {*} obj
+   * @returns {*}
+   */
+  afterFind(obj) {
+    if () {
+      return
+    }
+  }
+
+  {{customQueriesStr}}
+
+  _afterFind() {
+
+  }
+}
+
+{{fragmentsStr}}
+
+module.exports = {{collectionName}}

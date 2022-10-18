@@ -1,4 +1,5 @@
 const GeneratedModel = require('../models/GeneratedModel')
+const QueryDefinition = require('../models/QueryDefinition')
 const fs = require('fs')
 
 /**
@@ -39,67 +40,113 @@ function schemaToModels(schemaStr) {
  * @return {GeneratedModel}
  */
 function getModelFromMatch(modelName, modelDefinition) {
+  const connections = {}
   const params = modelDefinition
     .split('\n')
     .map(kvpair => kvpair.trim())
     .filter(v => !!v)
     .map(kvpair => {
       const parts = kvpair.split(':').map(v => v.trim())
+
+      const connection = getConnectionFromFieldValue(parts[1])
+      if (connection) {
+        connection[parts[0]] = connection
+      }
+
       return parts[0]
     })
-  return new GeneratedModel(modelName, params)
+  return new GeneratedModel(modelName, params, connections)
+}
+
+/**
+ * @param {string} val
+ * @returns {string|null}
+ */
+function getConnectionFromFieldValue(val) {
+  const reg = new RegExp(`\\[*([A-Za-z]+)\\]*\\s@[a-zA-z]+`)
+  const match = reg.exec(val)
+  if (match) {
+    return match[1]
+  }
+  return null
 }
 
 // ------------------------------------------------------------------------------------------
 
 /**
  * @param schemaStr
- * @returns {Object<string, Object<string, string>>}
+ * @param {Array<GeneratedModel>} models
+ * @returns {Object<string, Object<string, Object<string, string>>>}
  */
-function schemaToQueries(schemaStr) {
+function schemaToQueries(schemaStr, models) {
   return Object.assign(
     {},
-    schemaToQueriesOrMutations('Query', schemaStr),
-    schemaToQueriesOrMutations('Mutation', schemaStr),
+    schemaToQueriesOrMutations('Query', schemaStr, models),
+    schemaToQueriesOrMutations('Mutation', schemaStr, models),
   )
 }
 
 /**
  * @param {string} type
  * @param {string} schemaStr
- * @returns {Object<string, Object<string, string>>}
+ * @param {Array<GeneratedModel>} models
+ * @returns {Object<string, Object<string, Object<string, string>>>}
+ * eg.: {listBlogs: {filter: ModelBlogFilter, nextToken: String, limit: Int}}
  */
-function schemaToQueriesOrMutations(type, schemaStr) {
+function schemaToQueriesOrMutations(type, schemaStr, models) {
   const reg = new RegExp(
     `type[\\s]+${type}[\\s]+{([.\\s\\w\\d:!@\\[\\]\\(\\),]*)}`,
     'md',
   )
 
   const match = reg.exec(schemaStr)
-
-  return match[1]
+  const lines = match[1]
     .split('\n')
     .map(queryDef => queryDef.trim())
     .filter(v => !!v)
-    .reduce((agr, queryDef) => {
-      // we want to separate the `getPost` from the `(id: ID!)`
-      // so that we're left with just getPost, and `id: ID!`
-      const parts = queryDef.split('(').map(v => {
-        v = v.trim()
-        const closingPar = v.indexOf(')')
-        if (closingPar >= 0) {
-          return v.slice(0, closingPar)
-        }
-        return v
-      })
-      // now we convert all the 'id: ID!' into {id: 'ID!'}
-      agr[parts[0]] = parts[1].split(',').reduce((inputs, kvpair) => {
-        const kvParts = kvpair.split(':')
-        inputs[kvParts[0].trim()] = kvParts[1].trim()
-        return inputs
-      }, {})
-      return agr
-    }, {})
+
+  const returnTypeToModel = models.reduce((agr, m) => {
+    agr[m.name] = m
+    agr[`Model${m.name}Connection`] = m
+    return agr
+  }, [])
+
+  return lines.reduce((agr, line) => {
+    // we want to separate the `getPost` from the `(id: ID!)`
+    // so that we're left with just getPost, and `id: ID!`
+    const [queryName, partsStr] = line.split('(').map(v => {
+      v = v.trim()
+      const closingPar = v.indexOf(')')
+      if (closingPar >= 0) {
+        const paramsStr = v.slice(0, closingPar)
+        // now we convert all the 'id: ID!' into {id: 'ID!'}
+        return paramsStr.split(',').reduce((inputs, kvpair) => {
+          const kvParts = kvpair.split(':')
+          inputs[kvParts[0].trim()] = kvParts[1].trim()
+          return inputs
+        }, {})
+      }
+      return v
+    })
+
+    const returnTypeSplit = line.split(':')
+    const returnType = returnTypeSplit[returnTypeSplit.length - 1]
+    const model = returnTypeToModel[returnType]
+    if (model) {
+      const queryType =
+        type === 'Mutate'
+          ? QueryDefinition.TYPE_MUTATION
+          : returnType === model.name
+          ? QueryDefinition.TYPE_QUERY_ONE
+          : QueryDefinition.TYPE_QUERY_LIST
+
+      model.addQueryDefinition(
+        new QueryDefinition(queryType, queryName, partsStr),
+      )
+    }
+
+    return agr
+  }, {})
 }
 
 // ------------------------------------------------------------------------------------------

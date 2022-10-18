@@ -10,7 +10,7 @@ const {
 class OutputDefinition {
   /**
    * @param {Array<GeneratedModel>} models
-   * @param {Object<string, Object<string, string>>} queryDefinitions
+   * @param {Object<string, Object<string, Object<string, string>>>} queryDefinitions
    */
   constructor(models, queryDefinitions) {
     this.models = models
@@ -21,7 +21,7 @@ class OutputDefinition {
    * @param {string} directory
    */
   writeFiles(directory) {
-    this._writeModelFiles
+    this._writeCollectionFiles(directory)
   }
 
   // ------------------------------------------------------------------------------------------
@@ -30,7 +30,7 @@ class OutputDefinition {
    * @param {string} outputDir
    * @protected
    */
-  _writeModelFiles(outputDir) {
+  _writeCollectionFiles(outputDir) {
     // First we build the models folder index file
     fs.writeFileSync(
       path.join(outputDir, 'models', 'index.js'),
@@ -38,17 +38,12 @@ class OutputDefinition {
         fs.readFileSync(
           path.join(__dirname, '..', 'templates', 'genericModule.txt'),
         ),
-        {
-          importsStr: this.models
-            .map(m => `const ${m.name} = require('./${m.name})`)
-            .join('\n'),
-          exportStr: `{${this.models.map(m => m.name).join('\n')}`,
-        },
+        {},
       ),
     )
 
     // next we create each individual model file
-    this.models.forEach(m => this._writeSingleModelFile(outputDir, m))
+    this.models.forEach(m => this._writeSingleCollectionFile(outputDir, m))
   }
 
   /**
@@ -56,7 +51,24 @@ class OutputDefinition {
    * @param {GeneratedModel} model
    * @protected
    */
-  _writeSingleModelFile(outputDir, model) {}
+  _writeSingleCollectionFile(outputDir, model) {
+    // First we build the models folder index file
+    fs.writeFileSync(
+      path.join(outputDir, 'collections', model.name + '.js'),
+      Mustache.render(
+        fs.readFileSync(
+          path.join(__dirname, '..', 'templates', 'collection.txt'),
+        ),
+        {
+          collectionName: model.name,
+          // customQueriesStr: model.,
+        },
+      ),
+    )
+
+    // next we create each individual model file
+    this.models.forEach(m => this._writeSingleCollectionFile(outputDir, m))
+  }
 
   /**
    * @param {string} outputDir
@@ -86,7 +98,7 @@ class OutputDefinition {
     const models = schemaToModels(srcSchemaStr)
 
     // get the input types
-    const queryParams = schemaToQueries(builtSchemaStr)
+    const queryParams = schemaToQueries(builtSchemaStr, models)
 
     return new OutputDefinition(models, queryParams)
   }

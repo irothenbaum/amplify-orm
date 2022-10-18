@@ -6,10 +6,20 @@ class GeneratedModel {
   /**
    * @param {string} name
    * @param {Array<string>} fields
+   * @param {Object<string, string>} connections
    */
-  constructor(name, fields) {
+  constructor(name, fields, connections) {
     this.name = name
     this.allFields = fields
+    this.connections = connections
+    this.queries = []
+  }
+
+  /**
+   * @param {QueryDefinition} def
+   */
+  addQueryDefinition(def) {
+    this.queries.push(def)
   }
 
   /**
@@ -20,7 +30,7 @@ class GeneratedModel {
     return Mustache.render(
       fs.readFileSync(path.join(__dirname, '..', 'templates', 'fragment.txt')),
       {
-        fragmentName: name,
+        fragmentName: name || `Fragment${this.name}Default`,
         modelName: this.name,
         fieldsList: (fieldsList || this.allFields).join('\n'),
       },

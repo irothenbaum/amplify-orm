@@ -1,0 +1,11 @@
+/**
+ * @param {{{inputType}}} input
+ * @returns {Promise<*>}
+ */
+async {{functionName}}(input) {
+  return this.{{internalFunction}}(
+     {{functionName}},
+     inputs,
+     this.fragmentName,
+  )
+}
