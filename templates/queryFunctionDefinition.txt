@@ -5,7 +5,15 @@
 async {{functionName}}(input) {
   return this.{{internalFunction}}(
      {{functionName}},
-     inputs,
+     input,
      this.fragmentName,
   )
+}
+
+/**
+ * @param {{{inputType}}} input
+ * @returns {Promise<*>}
+ */
+static async {{functionName}}(input) {
+  return new {{collectionName}}().{{functionName}}(input)
 }

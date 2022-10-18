@@ -25,14 +25,16 @@ class QueryDefinition {
   }
 
   /**
+   * @param {string} collectionName
    * @returns {string}
    */
-  toFunctionDefinition() {
+  toFunctionDefinition(collectionName) {
     return Mustache.render(
       fs.readFileSync(
         path.join(__dirname, '..', 'templates', 'queryFunctionDefinition.txt'),
       ),
       {
+        collectionName: collectionName,
         functionName: this.queryName,
         inputType: `{${Object.entries(this.params).reduce(
           (agr, [param, type]) => {

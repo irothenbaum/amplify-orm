@@ -4,17 +4,15 @@ const Mustache = require('mustache')
 const {
   loadSchemaToString,
   schemaToModels,
-  schemaToQueries,
+  addQueriesToModels,
 } = require('../tools/schemaParsing')
 
 class OutputDefinition {
   /**
    * @param {Array<GeneratedModel>} models
-   * @param {Object<string, Object<string, Object<string, string>>>} queryDefinitions
    */
-  constructor(models, queryDefinitions) {
+  constructor(models) {
     this.models = models
-    this.queryDefinitions = queryDefinitions
   }
 
   /**
@@ -54,14 +52,19 @@ class OutputDefinition {
   _writeSingleCollectionFile(outputDir, model) {
     // First we build the models folder index file
     fs.writeFileSync(
-      path.join(outputDir, 'collections', model.name + '.js'),
+      path.join(outputDir, 'collections', model.getCollectionName() + '.js'),
       Mustache.render(
         fs.readFileSync(
           path.join(__dirname, '..', 'templates', 'collection.txt'),
         ),
         {
-          collectionName: model.name,
-          // customQueriesStr: model.,
+          collectionName: model.getCollectionName(),
+          customQueriesStr: model.queries
+            .map(def => def.toFunctionDefinition(model.getCollectionName()))
+            .join('\n'),
+          fragmentsStr: Object.entries(model.fragments).map(
+            ([fragmentName, fields]) => model.toFragment(fragmentName, fields),
+          ),
         },
       ),
     )
@@ -88,19 +91,39 @@ class OutputDefinition {
   /**
    * @param {string} srcSchemaPath
    * @param {string} builtSchemaPath
+   * @param {CustomFragmentsDefinition} fragments
+   * @param {CustomHooksDefinition} hooks
    * @return {OutputDefinition}
    */
-  static getFromSchema(srcSchemaPath, builtSchemaPath) {
+  static getFromSchema(srcSchemaPath, builtSchemaPath, fragments, hooks) {
     const srcSchemaStr = loadSchemaToString(srcSchemaPath)
     const builtSchemaStr = loadSchemaToString(builtSchemaPath)
 
     // get our basic models
     const models = schemaToModels(srcSchemaStr)
 
-    // get the input types
-    const queryParams = schemaToQueries(builtSchemaStr, models)
+    // apply the input types
+    addQueriesToModels(builtSchemaStr, models)
 
-    return new OutputDefinition(models, queryParams)
+    // add our custom fragments and hooks to the models
+    models.forEach(m => {
+      const modelFragments = fragments[m.name]
+      const modelHooks = hooks[m.name]
+
+      if (modelFragments) {
+        Object.entries(modelFragments).forEach(([name, definition]) =>
+          m.addFragment(name, definition),
+        )
+      }
+
+      if (modelHooks) {
+        Object.entries(modelHooks).forEach(([name, definition]) =>
+          m.addHook(name, definition),
+        )
+      }
+    })
+
+    return new OutputDefinition(models)
   }
 }
 

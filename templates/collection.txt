@@ -6,16 +6,6 @@ class {{collectionName}} extends AbstractCollection {
     super()
   }
 
-  /**
-   * @param {*} obj
-   * @returns {*}
-   */
-  afterFind(obj) {
-    if () {
-      return
-    }
-  }
-
   {{customQueriesStr}}
 
   _afterFind() {

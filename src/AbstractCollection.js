@@ -35,61 +35,6 @@ class AbstractCollection {
   }
 
   // -----------------------------------------------------------------------------------------------------------
-  // the default queries that we know AppSync generates
-  // -----------------------------------------------------------------------------------------------------------
-  // /**
-  //  * @param {*?} inputs
-  //  * @returns {Promise<*>}
-  //  */
-  // listAll(inputs) {
-  //   return this._list(`list${this.constructor.name}`, inputs, this.fragmentName)
-  // }
-  //
-  // /**
-  //  * @param {*} inputs
-  //  * @returns {Promise<*>}
-  //  */
-  // get(inputs) {
-  //   return this._get(`get${this.constructor.name}`, inputs, this.fragmentName)
-  // }
-  //
-  // /**
-  //  * @param {*} inputs
-  //  * @returns {Promise<*>}
-  //  */
-  // create(inputs) {
-  //   return this._mutate(
-  //     `create${this.constructor.name}`,
-  //     inputs,
-  //     this.fragmentName,
-  //   )
-  // }
-  //
-  // /**
-  //  * @param {*} inputs
-  //  * @returns {Promise<*>}
-  //  */
-  // update(inputs) {
-  //   return this._mutate(
-  //     `update${this.constructor.name}`,
-  //     inputs,
-  //     this.fragmentName,
-  //   )
-  // }
-  //
-  // /**
-  //  * @param {*} inputs
-  //  * @returns {Promise<*>}
-  //  */
-  // delete(inputs) {
-  //   return this._mutate(
-  //     `delete${this.constructor.name}`,
-  //     inputs,
-  //     this.fragmentName,
-  //   )
-  // }
-
-  // -----------------------------------------------------------------------------------------------------------
   // Protected functions
 
   /**
@@ -99,11 +44,17 @@ class AbstractCollection {
    * @returns {Promise<Array<*>>}
    * @protected
    */
-  _list(queryName, inputs, fragmentName) {
-    return GQLQueryHelper.Instance().queryAll(
+  async _list(queryName, inputs, fragmentName) {
+    const retVal = await GQLQueryHelper.Instance().queryAll(
       this._buildListQuery(queryName, fragmentName),
       inputs,
     )
+
+    if (typeof this.afterFind === 'function') {
+      return retVal.map(r => this.afterFind(r))
+    }
+
+    return retVal
   }
 
   /**
@@ -113,11 +64,17 @@ class AbstractCollection {
    * @returns {Promise<*>}
    * @protected
    */
-  _get(queryName, inputs, fragmentName) {
-    return GQLQueryHelper.Instance().queryOnce(
+  async _get(queryName, inputs, fragmentName) {
+    const retVal = await GQLQueryHelper.Instance().queryOnce(
       this._buildGetQuery(queryName, fragmentName),
       inputs,
     )
+
+    if (typeof this.afterFind === 'function') {
+      return this.afterFind(retVal)
+    }
+
+    return retVal
   }
 
   /**
@@ -127,11 +84,17 @@ class AbstractCollection {
    * @returns {Promise<*>}
    * @protected
    */
-  _mutate(queryName, inputs, fragmentName) {
-    return GQLQueryHelper.Instance().executeMutation(
+  async _mutate(queryName, inputs, fragmentName) {
+    const retVal = await GQLQueryHelper.Instance().executeMutation(
       this._buildMutation(queryName, fragmentName),
       inputs,
     )
+
+    if (typeof this.afterFind === 'function') {
+      return this.afterFind(retVal)
+    }
+
+    return retVal
   }
 
   /**

@@ -76,13 +76,13 @@ function getConnectionFromFieldValue(val) {
 /**
  * @param schemaStr
  * @param {Array<GeneratedModel>} models
- * @returns {Object<string, Object<string, Object<string, string>>>}
+ * @returns {void}
  */
-function schemaToQueries(schemaStr, models) {
+function addQueriesToModels(schemaStr, models) {
   return Object.assign(
     {},
-    schemaToQueriesOrMutations('Query', schemaStr, models),
-    schemaToQueriesOrMutations('Mutation', schemaStr, models),
+    addQueriesOrMutationsToModels('Query', schemaStr, models),
+    addQueriesOrMutationsToModels('Mutation', schemaStr, models),
   )
 }
 
@@ -90,10 +90,8 @@ function schemaToQueries(schemaStr, models) {
  * @param {string} type
  * @param {string} schemaStr
  * @param {Array<GeneratedModel>} models
- * @returns {Object<string, Object<string, Object<string, string>>>}
- * eg.: {listBlogs: {filter: ModelBlogFilter, nextToken: String, limit: Int}}
  */
-function schemaToQueriesOrMutations(type, schemaStr, models) {
+function addQueriesOrMutationsToModels(type, schemaStr, models) {
   const reg = new RegExp(
     `type[\\s]+${type}[\\s]+{([.\\s\\w\\d:!@\\[\\]\\(\\),]*)}`,
     'md',
@@ -134,7 +132,7 @@ function schemaToQueriesOrMutations(type, schemaStr, models) {
     const model = returnTypeToModel[returnType]
     if (model) {
       const queryType =
-        type === 'Mutate'
+        type === 'Mutation'
           ? QueryDefinition.TYPE_MUTATION
           : returnType === model.name
           ? QueryDefinition.TYPE_QUERY_ONE
@@ -160,5 +158,5 @@ function getFieldType(rawTypeStr) {}
 module.exports = {
   loadSchemaToString,
   schemaToModels,
-  schemaToQueries,
+  addQueriesToModels,
 }
