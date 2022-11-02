@@ -49,14 +49,13 @@ class QueryDefinition {
         collectionName: collectionName,
         functionName: this.getFunctionName(),
         queryName: this.queryName,
-        inputType: `{${Object.entries(this.params).reduce(
-          (agr, [param, type]) => {
+        inputType: `{${Object.entries(this.params).map(
+          ([param, type]) => {
             const isRequired = type.includes('!')
             
-            return agr + `${param}${isRequired ? '' : '?'}: ${type.replace('!', '')},\n`
+            return `${param}${isRequired ? '' : '?'}: ${type.replace('!', '')}`
           },
-          '',
-        )}}`,
+        ).join(',\n')}}`,
         internalFunction: typeToInternalFunction[this.type],
       },
     )

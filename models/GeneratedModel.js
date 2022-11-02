@@ -20,7 +20,7 @@ class GeneratedModel {
     /** @type {Array<QueryDefinition>} */
     this.queries = []
 
-    const defaultFragmentName = `Fragment${this.name}Default`
+    const defaultFragmentName = `FragmentDefault`
     /** @type {Object<string, Array<FragmentField>>} */
     this.fragments = {
       // start off with the default fragment

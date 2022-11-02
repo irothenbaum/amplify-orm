@@ -24,3 +24,35 @@ These are for compile time types
  *  before/afterDelete
  *  before/afterUpdate
  */
+
+
+const knownMap = {
+  'ID': 'string',
+  'String': 'string',
+  'Float': 'number',
+  'Int': 'number',
+  'AWSDate': 'string|Date',
+  'AWSDateTime': 'string|Date',
+  'Boolean': 'boolean',
+  // 'AWSJson': 'string|*', ???
+  'ModelAttributeTypes': 'string', // TODO: This is an enum. We should handle all Enums more formally
+}
+
+/**
+ * @param {string} type
+ * @returns {string}
+ */
+function convertDynamoTypeToJSDoc(type) {
+  // if it's an array, change to JSDoc type
+  if (type[0] === '[') {
+    return `Array<${convertDynamoTypeToJSDoc(type.slice(1,-1))}>`
+  } else if (knownMap[type]) {
+    return knownMap[type]
+  }
+  return type
+}
+
+module.exports = {
+  convertDynamoTypeToJSDoc,
+
+}

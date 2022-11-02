@@ -177,13 +177,46 @@ function addQueriesOrMutationsToModels(type, schemaStr, models) {
 // ------------------------------------------------------------------------------------------
 
 /**
- * @param {string} rawTypeStr
- * @return {string}
+ * @param {string} schemaStr
+ * @returns {Object<string, Object<string, string>>}
  */
-function getFieldType(rawTypeStr) {}
+function getInputTypeDefinitions(schemaStr) {
+  global.LOG(`Parsing input types from schema`)
+  const reg = new RegExp(
+    `input[\\s]+([.\\w\\d:!@\\[\\]\\(\\),]*)[\\s]+{([.\\s\\w\\d:!@\\[\\]\\(\\),]*)}`,
+    'gmd',
+  )
+
+  const retVal = {}
+  const matches = schemaStr.matchAll(reg)
+
+  global.LOG(`Found ${matches.length} Input types`)
+
+  for (const match of matches) {
+    const inputName = match[1]
+    const fields = match[2]
+
+    retVal[inputName] = fields.split('\n').reduce((agr, line) => {
+      const parts = line.split(':').map(p => p.trim())
+
+      // if either the field or the type is missing, we skip
+      if (!parts[0] || !parts[1]) {
+        return agr
+      }
+
+      agr[parts[0]] = parts[1]
+      return agr
+    }, {})
+
+    global.LOG(`Added input type ${inputName}:`, retVal[inputName])
+  }
+
+  return retVal
+}
 
 module.exports = {
   loadSchemaToString,
   schemaToModels,
   addQueriesToModels,
+  getInputTypeDefinitions,
 }

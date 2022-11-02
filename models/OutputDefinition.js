@@ -1,18 +1,22 @@
 const fs = require('fs')
 const path = require('path')
 const Mustache = require('mustache')
+const {convertDynamoTypeToJSDoc} = require('../tools/types')
 const {
   loadSchemaToString,
   schemaToModels,
   addQueriesToModels,
+  getInputTypeDefinitions,
 } = require('../tools/schemaParsing')
 
 class OutputDefinition {
   /**
    * @param {Array<GeneratedModel>} models
+   * @param {Object<string, Object<string, string>>} inputTypes
    */
-  constructor(models) {
+  constructor(models, inputTypes) {
     this.models = models
+    this.inputTypes = inputTypes
   }
 
   /**
@@ -22,6 +26,8 @@ class OutputDefinition {
     this._writeCollectionFiles(directory)
     this._writeQueryFiles(directory)
     this._writeDynamicStaticTypes(directory)
+
+    this._copySrcFiles(directory)
   }
 
 
@@ -56,7 +62,28 @@ class OutputDefinition {
    * @protected
    */
   _writeDynamicStaticTypes(outputDir) {
-    // TODO: The dynamicTypes.js should be a collection of typedefs that describe the input objects for each function
+    const inputTypeNames = Object.keys(this.inputTypes)
+    global.LOG(`Writing ${inputTypeNames.length} Input types to dynamicTypes.js`)
+
+    fs.writeFileSync(
+      path.join(outputDir, 'dynamicTypes.js'),
+      inputTypeNames.map(name => {
+        global.LOG(`Writing ${name} type:`, this.inputTypes[name])
+        return Mustache.render(
+          fs.readFileSync(
+            path.join(__dirname, '..', 'templates', 'typeDefinition.txt'),
+          ).toString(),
+          {
+            typeName: name,
+            propertiesStr: Object.entries(this.inputTypes[name]).map(([param, type]) => {
+              const isRequired = type.includes('!')
+              return `  @property {${convertDynamoTypeToJSDoc(type.replace('!', ''))}${isRequired ? '' : '?'}} ${param}`
+            }).join('\n')
+          },
+        )
+      }).join('\n\n'),
+      {flag: 'w'}
+    )
   }
 
   /**
@@ -117,6 +144,14 @@ class OutputDefinition {
     )
   }
 
+  /**
+   * @param {string} outputDir
+   * @protected
+   */
+  _copySrcFiles(outputDir) {
+    // TODO: Copy the source files
+  }
+
   // ------------------------------------------------------------------------------------------
   // Static functions
 
@@ -169,7 +204,9 @@ class OutputDefinition {
       }
     })
 
-    return new OutputDefinition(models)
+    const inputTypes = getInputTypeDefinitions(builtSchemaStr)
+
+    return new OutputDefinition(models, inputTypes)
   }
 }
 
