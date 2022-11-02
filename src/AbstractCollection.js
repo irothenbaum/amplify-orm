@@ -41,13 +41,15 @@ class AbstractCollection {
    * @param {string} queryName
    * @param {*} inputs
    * @param {string} fragmentName
+   * @param {QueryOptions?} options
    * @returns {Promise<Array<*>>}
    * @protected
    */
-  async _list(queryName, inputs, fragmentName) {
+  async _list(queryName, inputs, fragmentName, options) {
     const retVal = await GQLQueryHelper.Instance().queryAll(
       this._buildListQuery(queryName, fragmentName),
       inputs,
+      options,
     )
 
     if (typeof this.afterFind === 'function') {
@@ -61,10 +63,31 @@ class AbstractCollection {
    * @param {string} queryName
    * @param {*} inputs
    * @param {string} fragmentName
+   * @param {QueryOptions?} options
+   * @returns {Promise<GQLQueryIterator>}
+   * @protected
+   */
+  async _iterate(queryName, inputs, fragmentName, options) {
+    // TODO: options?
+    return GQLQueryHelper.Instance().iterativeQuery(
+      this._buildListQuery(queryName, fragmentName),
+      inputs,
+      typeof this.afterFind === 'function'
+        ? this._afterFind.bind(this)
+        : undefined,
+    )
+  }
+
+  /**
+   * @param {string} queryName
+   * @param {*} inputs
+   * @param {string} fragmentName
+   * @param {QueryOptions?} options
    * @returns {Promise<*>}
    * @protected
    */
-  async _get(queryName, inputs, fragmentName) {
+  async _get(queryName, inputs, fragmentName, options) {
+    // TODO: options?
     const retVal = await GQLQueryHelper.Instance().queryOnce(
       this._buildGetQuery(queryName, fragmentName),
       inputs,
@@ -81,10 +104,12 @@ class AbstractCollection {
    * @param {string} queryName
    * @param {*} inputs
    * @param {string} fragmentName
+   * @param {QueryOptions?} options
    * @returns {Promise<*>}
    * @protected
    */
-  async _mutate(queryName, inputs, fragmentName) {
+  async _mutate(queryName, inputs, fragmentName, options) {
+    // TODO: options?
     const retVal = await GQLQueryHelper.Instance().executeMutation(
       this._buildMutation(queryName, fragmentName),
       inputs,

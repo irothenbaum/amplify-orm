@@ -2,7 +2,8 @@
 There are run time type definitions
  */
 
-/** @typedef ListOptions
+/**
+ * @typedef QueryOptions
  * @property {number} maxIterations
  * @property {number} maxResults
  */

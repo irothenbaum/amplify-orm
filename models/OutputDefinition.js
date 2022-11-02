@@ -31,7 +31,7 @@ class OutputDefinition {
   _writeCollectionFiles(outputDir) {
     // First we build the models folder index file
     fs.writeFileSync(
-      path.join(outputDir, 'models', 'index.js'),
+      path.join(outputDir, 'collections', 'index.js'),
       Mustache.render(
         fs.readFileSync(
           path.join(__dirname, '..', 'templates', 'genericModule.txt'),
@@ -42,6 +42,17 @@ class OutputDefinition {
 
     // next we create each individual model file
     this.models.forEach(m => this._writeSingleCollectionFile(outputDir, m))
+
+    // next we create the fragments constants file
+    fs.writeFileSync(
+      path.join(outputDir, 'fragments', 'index.js'),
+      Mustache.render(
+        fs.readFileSync(
+          path.join(__dirname, '..', 'templates', 'genericModule.txt'),
+        ),
+        {},
+      ),
+    )
   }
 
   /**
@@ -50,7 +61,7 @@ class OutputDefinition {
    * @protected
    */
   _writeSingleCollectionFile(outputDir, model) {
-    // First we build the models folder index file
+    // Here we build each model's collection module
     fs.writeFileSync(
       path.join(outputDir, 'collections', model.getCollectionName() + '.js'),
       Mustache.render(

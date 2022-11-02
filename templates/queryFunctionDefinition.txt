@@ -1,12 +1,14 @@
 /**
  * @param {{{inputType}}} input
+ * @param {QueryOptions?} options
  * @returns {Promise<*>}
  */
-async {{functionName}}(input) {
+async {{functionName}}(input, options) {
   return this.{{internalFunction}}(
      {{functionName}},
      input,
      this.fragmentName,
+     options,
   )
 }
 
@@ -15,5 +17,5 @@ async {{functionName}}(input) {
  * @returns {Promise<*>}
  */
 static async {{functionName}}(input) {
-  return new {{collectionName}}().{{functionName}}(input)
+  return new this().{{functionName}}(input)
 }

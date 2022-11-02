@@ -58,7 +58,8 @@ class GeneratedModel {
    * @param {function} func
    */
   addHook(hookName, func) {
-    // TODO: this won't work right I don't think ...
+    // TODO: this won't work right I don't think ..
+    //  (because we somehow need to stringify the function?)
     this.hooks[hookName] = func
   }
 
@@ -67,12 +68,26 @@ class GeneratedModel {
    * @param {Array<FragmentField>} fieldsList
    */
   toFragment(name, fieldsList) {
-    return Mustache.render(
-      fs.readFileSync(path.join(__dirname, '..', 'templates', 'fragment.txt')),
+    const fragmentGQL = Mustache.render(
+      fs.readFileSync(
+        path.join(__dirname, '..', 'templates', 'fragmentGQL.txt'),
+      ),
       {
         fragmentName: name,
         modelName: this.name,
         fieldsList: fieldsListToString(fieldsList),
+      },
+    )
+
+    // we return the fragmentConstant definition to be used in Collection
+    return Mustache.render(
+      fs.readFileSync(
+        path.join(__dirname, '..', 'templates', 'fragmentConstant.txt'),
+      ),
+      {
+        fragmentGQL: fragmentGQL,
+        collectionName: this.getCollectionName(),
+        fragmentName: name,
       },
     )
   }

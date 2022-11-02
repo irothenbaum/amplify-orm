@@ -64,9 +64,10 @@ class GQLQueryHelper {
   /**
    * @param {string} query
    * @param {*?} params
+   * @param {function?} afterFind
    * @returns {GQLQueryIterator}
    */
-  iterativeQuery(query, params) {
+  iterativeQuery(query, params, afterFind) {
     return new GQLQueryIterator(async function () {
       if (this.hasCompleted) {
         return []
@@ -86,7 +87,9 @@ class GQLQueryHelper {
           this.hasCompleted = true
         }
 
-        return resp.payload
+        return typeof afterFind === 'function'
+          ? await afterFind(resp.payload)
+          : resp.payload
       } catch (resp) {
         handleQueryException(resp)
       }
@@ -97,7 +100,7 @@ class GQLQueryHelper {
    * Will exhaustively search all records until we've gathered maximumResults, executed maximumIterations, or scanned all records
    * @param {string} query
    * @param {*?} params
-   * @param {ListOptions?} options
+   * @param {QueryOptions?} options
    * @returns {Promise<Array<*>>}
    */
   async queryAll(query, params, options) {

@@ -1,4 +1,5 @@
 const fragments = require('./fragments')
+const {graphqlOperation} = require('aws-amplify')
 const AbstractCollection = require('./AbstractCollection')
 
 class {{collectionName}} extends AbstractCollection {

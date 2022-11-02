@@ -51,12 +51,14 @@ class QueryDefinition {
 QueryDefinition.TYPE_MUTATION = 'mutate'
 QueryDefinition.TYPE_QUERY_LIST = 'list'
 QueryDefinition.TYPE_QUERY_ONE = 'get'
+QueryDefinition.TYPE_QUERY_ITERATIVE = 'iterative'
 
 // these are the respective AbstractCollection function that this query type maps to
 const typeToInternalFunction = {
   [QueryDefinition.TYPE_MUTATION]: '_mutate',
   [QueryDefinition.TYPE_QUERY_LIST]: '_list',
   [QueryDefinition.TYPE_QUERY_ONE]: '_get',
+  [QueryDefinition.TYPE_QUERY_ITERATIVE]: '_iterate',
 }
 
 module.exports = QueryDefinition
