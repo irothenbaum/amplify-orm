@@ -14,6 +14,7 @@ class QueryDefinition {
         QueryDefinition.TYPE_MUTATION,
         QueryDefinition.TYPE_QUERY_ONE,
         QueryDefinition.TYPE_QUERY_LIST,
+        QueryDefinition.TYPE_QUERY_ITERATIVE,
       ].includes(type)
     ) {
       throw new Error('Invalid type ' + type)
@@ -25,6 +26,16 @@ class QueryDefinition {
   }
 
   /**
+   * @returns {string}
+   */
+  getFunctionName() {
+    if (this.type === QueryDefinition.TYPE_QUERY_ITERATIVE) {
+      return this.queryName.replace('list', 'iterate')
+    }
+    return this.queryName
+  }
+
+  /**
    * @param {string} collectionName
    * @returns {string}
    */
@@ -32,10 +43,11 @@ class QueryDefinition {
     return Mustache.render(
       fs.readFileSync(
         path.join(__dirname, '..', 'templates', 'queryFunctionDefinition.txt'),
-      ),
+      ).toString(),
       {
         collectionName: collectionName,
-        functionName: this.queryName,
+        functionName: this.getFunctionName(),
+        queryName: this.queryName,
         inputType: `{${Object.entries(this.params).reduce(
           (agr, [param, type]) => {
             return agr + `${param}: ${type}\n`
@@ -45,6 +57,13 @@ class QueryDefinition {
         internalFunction: typeToInternalFunction[this.type],
       },
     )
+  }
+
+  /**
+   * @returns {string}
+   */
+  toQueryParamDefinition() {
+    return `${this.queryName}:${JSON.stringify(this.params)}`
   }
 }
 

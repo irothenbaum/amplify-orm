@@ -1,14 +1,17 @@
 const path = require('path')
+const fs = require('fs')
 const OutputDefinition = require('../models/OutputDefinition')
 
 async function build() {
   const configPath = path.join(process.cwd(), process.argv[2])
-  console.log(configPath)
+  console.log(`Loading config from: "${configPath}"`)
   const config = require(configPath)
 
+  const baseDir = path.dirname(configPath)
+
   const def = OutputDefinition.getFromSchema(
-    config.srcSchema,
-    config.buildSchema,
+    path.join(baseDir, config.srcSchema),
+    path.join(baseDir, config.buildSchema),
     config.fragments,
     config.hooks,
   )
@@ -19,7 +22,13 @@ async function build() {
 
   console.log('Built, writing to ' + outputDir)
 
-  def.writeFiles(process.argv[3])
+  if (fs.existsSync(outputDir)) {
+    fs.rmSync(outputDir, {recursive:true,force:true})
+  }
+
+  fs.mkdirSync(outputDir)
+
+  def.writeFiles(outputDir)
 }
 
 build()

@@ -141,6 +141,11 @@ function addQueriesOrMutationsToModels(type, schemaStr, models) {
       model.addQueryDefinition(
         new QueryDefinition(queryType, queryName, partsStr),
       )
+
+      // every list query will also have an iterative query
+      if (queryType === QueryDefinition.TYPE_QUERY_LIST) {
+        new QueryDefinition(QueryDefinition.TYPE_QUERY_ITERATIVE, queryName, partsStr)
+      }
     }
 
     return agr

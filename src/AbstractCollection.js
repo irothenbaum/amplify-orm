@@ -1,6 +1,6 @@
 const GQLQueryHelper = require('./GQLQueryHelper')
 const fragments = require('./fragments')
-const queries = require('./queries')
+const queries = require('./queryInputs') // a generated file
 const {capitalize, pluralizeCollection} = require('./utilities')
 
 /**

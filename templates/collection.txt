@@ -7,7 +7,7 @@ class {{collectionName}} extends AbstractCollection {
     super()
   }
 
-  {{customQueriesStr}}
+  {{queryDefinitions}}
 
   _afterFind() {
 

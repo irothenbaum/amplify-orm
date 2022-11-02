@@ -20,10 +20,43 @@ class OutputDefinition {
    */
   writeFiles(directory) {
     this._writeCollectionFiles(directory)
+    this._writeQueryFiles(directory)
+    this._writeDynamicStaticTypes(directory)
   }
+
 
   // ------------------------------------------------------------------------------------------
   // Protected functions
+
+  /**
+   * @param {string} outputDir
+   * @protected
+   */
+  _writeQueryFiles(outputDir) {
+    // next we create the query definition file
+    fs.writeFileSync(
+      path.join(outputDir, 'queryInputs.js'),
+      Mustache.render(
+        fs.readFileSync(
+          path.join(__dirname, '..', 'templates', 'genericModule.txt'),
+        ).toString(),
+        {
+          importsStr: '',
+          exportStr: `{\n${this.models.map(m => m.queries.map(q => `  ${q.toQueryParamDefinition()}`).join(',\n')).join(',\n')}\n}`,
+        },
+      ),
+    )
+
+  }
+
+  /**
+   * @param {string} outputDir
+   * @protected
+   */
+  _writeDynamicStaticTypes(outputDir) {
+    // TODO: The dynamicTypes.str should be a collection of typedefs that describe the input objects for each function
+  }
+
   /**
    * @param {string} outputDir
    * @protected
@@ -35,24 +68,16 @@ class OutputDefinition {
       Mustache.render(
         fs.readFileSync(
           path.join(__dirname, '..', 'templates', 'genericModule.txt'),
-        ),
-        {},
+        ).toString(),
+        {
+          importsStr: ''
+
+        },
       ),
     )
 
     // next we create each individual model file
     this.models.forEach(m => this._writeSingleCollectionFile(outputDir, m))
-
-    // next we create the fragments constants file
-    fs.writeFileSync(
-      path.join(outputDir, 'fragments', 'index.js'),
-      Mustache.render(
-        fs.readFileSync(
-          path.join(__dirname, '..', 'templates', 'genericModule.txt'),
-        ),
-        {},
-      ),
-    )
   }
 
   /**
@@ -67,10 +92,10 @@ class OutputDefinition {
       Mustache.render(
         fs.readFileSync(
           path.join(__dirname, '..', 'templates', 'collection.txt'),
-        ),
+        ).toString(),
         {
           collectionName: model.getCollectionName(),
-          customQueriesStr: model.queries
+          queryDefinitions: model.queries
             .map(def => def.toFunctionDefinition(model.getCollectionName()))
             .join('\n'),
           fragmentsStr: Object.entries(model.fragments).map(

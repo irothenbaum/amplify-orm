@@ -71,7 +71,7 @@ class GeneratedModel {
     const fragmentGQL = Mustache.render(
       fs.readFileSync(
         path.join(__dirname, '..', 'templates', 'fragmentGQL.txt'),
-      ),
+      ).toString(),
       {
         fragmentName: name,
         modelName: this.name,
@@ -83,7 +83,7 @@ class GeneratedModel {
     return Mustache.render(
       fs.readFileSync(
         path.join(__dirname, '..', 'templates', 'fragmentConstant.txt'),
-      ),
+      ).toString(),
       {
         fragmentGQL: fragmentGQL,
         collectionName: this.getCollectionName(),
