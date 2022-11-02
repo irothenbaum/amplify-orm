@@ -40,6 +40,7 @@ class QueryDefinition {
    * @returns {string}
    */
   toFunctionDefinition(collectionName) {
+    global.LOG(`Generating function definition ${this.getFunctionName()} for query ${this.queryName}`)
     return Mustache.render(
       fs.readFileSync(
         path.join(__dirname, '..', 'templates', 'queryFunctionDefinition.txt'),
@@ -50,7 +51,9 @@ class QueryDefinition {
         queryName: this.queryName,
         inputType: `{${Object.entries(this.params).reduce(
           (agr, [param, type]) => {
-            return agr + `${param}: ${type}\n`
+            const isRequired = type.includes('!')
+            
+            return agr + `${param}${isRequired ? '' : '?'}: ${type.replace('!', '')},\n`
           },
           '',
         )}}`,

@@ -1,2 +1,2 @@
-{{importsStr}}
-module.exports = {{exportStr}}
+{{{importsStr}}}
+module.exports = {{{exportStr}}}

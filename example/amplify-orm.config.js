@@ -11,4 +11,6 @@ module.exports = {
 
   fragments: require('./customFragments'),
   hooks: require('./customHooks'),
+
+  debug: true, // if true, will print debug statements
 }

@@ -7,13 +7,13 @@ class {{collectionName}} extends AbstractCollection {
     super()
   }
 
-  {{queryDefinitions}}
+  {{{queryDefinitions}}}
 
   _afterFind() {
 
   }
 }
 
-{{fragmentsStr}}
+{{{fragmentsStr}}}
 
 module.exports = {{collectionName}}

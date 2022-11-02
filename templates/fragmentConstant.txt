@@ -1,1 +1,3 @@
-{{collectionName}}.{{fragmentName}} = graphqlOperation(`{{fragmentGQL}}`)
+{{collectionName}}.{{fragmentName}} = graphqlOperation(`
+{{fragmentGQL}}
+`)

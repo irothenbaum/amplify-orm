@@ -24,12 +24,17 @@ function schemaToModels(schemaStr) {
 
   const retVal = []
   const matches = schemaStr.matchAll(reg)
+
+  global.LOG(`Found ${matches.length} models`)
+
   for (const match of matches) {
     const modelName = match[1]
     const modelDefinition = match[2]
 
     retVal.push(getModelFromMatch(modelName, modelDefinition))
   }
+
+  global.LOG(`Created ${retVal.length} generated models`)
 
   return retVal
 }
@@ -40,6 +45,7 @@ function schemaToModels(schemaStr) {
  * @return {GeneratedModel}
  */
 function getModelFromMatch(modelName, modelDefinition) {
+  global.LOG(`Parsing model ${modelName}:`, modelDefinition)
   const connections = {}
   const params = modelDefinition
     .split('\n')
@@ -48,13 +54,17 @@ function getModelFromMatch(modelName, modelDefinition) {
     .map(kvpair => {
       const parts = kvpair.split(':').map(v => v.trim())
 
+      global.LOG(`Found field parts: `, parts)
+
       const connection = getConnectionFromFieldValue(parts[1])
       if (connection) {
+        global.LOG(`Determined ${parts[0]} is a connection:`, connection)
         connection[parts[0]] = connection
       }
 
       return parts[0]
     })
+
   return new GeneratedModel(modelName, params, connections)
 }
 
@@ -79,11 +89,8 @@ function getConnectionFromFieldValue(val) {
  * @returns {void}
  */
 function addQueriesToModels(schemaStr, models) {
-  return Object.assign(
-    {},
-    addQueriesOrMutationsToModels('Query', schemaStr, models),
-    addQueriesOrMutationsToModels('Mutation', schemaStr, models),
-  )
+  addQueriesOrMutationsToModels('Query', schemaStr, models)
+  addQueriesOrMutationsToModels('Mutation', schemaStr, models)
 }
 
 /**
@@ -92,6 +99,8 @@ function addQueriesToModels(schemaStr, models) {
  * @param {Array<GeneratedModel>} models
  */
 function addQueriesOrMutationsToModels(type, schemaStr, models) {
+  global.LOG(`Adding ${type} types to ${models.length} models`)
+
   const reg = new RegExp(
     `type[\\s]+${type}[\\s]+{([.\\s\\w\\d:!@\\[\\]\\(\\),]*)}`,
     'md',
@@ -127,9 +136,20 @@ function addQueriesOrMutationsToModels(type, schemaStr, models) {
       return v
     })
 
+    global.LOG(`Parsed query ${queryName} with parts:`, partsStr)
+
     const returnTypeSplit = line.split(':')
-    const returnType = returnTypeSplit[returnTypeSplit.length - 1]
+
+    global.LOG(`Return type split: `, returnTypeSplit)
+
+    const returnType = returnTypeSplit[returnTypeSplit.length - 1].trim()
+
+    global.LOG(`Return type: `, returnType)
+
     const model = returnTypeToModel[returnType]
+
+    global.LOG(`Model: `, model)
+
     if (model) {
       const queryType =
         type === 'Mutation'
@@ -146,6 +166,8 @@ function addQueriesOrMutationsToModels(type, schemaStr, models) {
       if (queryType === QueryDefinition.TYPE_QUERY_LIST) {
         new QueryDefinition(QueryDefinition.TYPE_QUERY_ITERATIVE, queryName, partsStr)
       }
+    } else {
+      global.LOG(`WARNING: Missing model`)
     }
 
     return agr

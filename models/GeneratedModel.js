@@ -5,26 +5,26 @@ const Mustache = require('mustache')
 class GeneratedModel {
   /**
    * @param {string} name
-   * @param {Array<string>} fields // TODO: Field Types?
+   * @param {Array<string>} fields // TODO: This is just an array of field names, do we need field Types?
    * @param {Object<string, string>} connections
    */
   constructor(name, fields, connections) {
+    global.LOG(`Generating model ${name} with inputs:`, name, fields, connections)
+
     this.name = name
 
-    // TODO: By default, the fields will include connections, but it probably shouldn't so we can avoid the multi-level nesting
-    //  Maybe by default the default fragment only has non-connection fields?
-
+    this.connectionFields = Object.keys(connections)
     this.allFields = fields
-    this.connections = connections
+    this.primitiveFields = fields.filter(f => !this.connectionFields.includes(f))
 
     /** @type {Array<QueryDefinition>} */
     this.queries = []
 
-    const defaultFragmentName = `Fragment${this.name}Complete`
+    const defaultFragmentName = `Fragment${this.name}Default`
     /** @type {Object<string, Array<FragmentField>>} */
     this.fragments = {
       // start off with the default fragment
-      defaultFragmentName: this.toFragment(defaultFragmentName, this.allFields),
+      [defaultFragmentName]: this.primitiveFields,
     }
 
     /** @type {Object<string, function>} hook:function */
@@ -42,6 +42,7 @@ class GeneratedModel {
    * @param {QueryDefinition} def
    */
   addQueryDefinition(def) {
+    global.LOG(`Adding ${def.queryName} (${def.type}) to ${this.name} model`)
     this.queries.push(def)
   }
 
@@ -50,6 +51,17 @@ class GeneratedModel {
    * @param {Array<FragmentField>} definition
    */
   addFragment(fragmentName, definition) {
+    global.LOG(`Adding ${fragmentName} to ${this.name} model, ${definition.length} fields`)
+    const invalidDefinitions = definition.filter(f => {
+      // a connection field will only have one key and that is the field name
+      let fieldName = typeof f === 'string' ? f : Object.keys(f)[0]
+      return !this.allFields.includes(fieldName)
+    })
+
+    if (invalidDefinitions.length > 0) {
+      throw new Error(`Unknown field(s) in fragment definition: [${invalidDefinitions.join(', ')}]`)
+    }
+
     this.fragments[fragmentName] = definition
   }
 
@@ -64,50 +76,58 @@ class GeneratedModel {
   }
 
   /**
-   * @param {string} name
-   * @param {Array<FragmentField>} fieldsList
+   * @returns {Array<string>}
    */
-  toFragment(name, fieldsList) {
-    const fragmentGQL = Mustache.render(
-      fs.readFileSync(
-        path.join(__dirname, '..', 'templates', 'fragmentGQL.txt'),
-      ).toString(),
-      {
-        fragmentName: name,
-        modelName: this.name,
-        fieldsList: fieldsListToString(fieldsList),
-      },
-    )
-
-    // we return the fragmentConstant definition to be used in Collection
-    return Mustache.render(
-      fs.readFileSync(
-        path.join(__dirname, '..', 'templates', 'fragmentConstant.txt'),
-      ).toString(),
-      {
-        fragmentGQL: fragmentGQL,
-        collectionName: this.getCollectionName(),
-        fragmentName: name,
-      },
+  getFragmentDefinitions() {
+    return Object.entries(this.fragments).map(
+      ([fragmentName, fields]) => {
+        // we return the fragmentConstant definition to be used in Collection
+        return Mustache.render(
+          fs.readFileSync(
+            path.join(__dirname, '..', 'templates', 'fragmentConstant.txt'),
+          ).toString(),
+          {
+            fragmentGQL: Mustache.render(
+              fs.readFileSync(
+                path.join(__dirname, '..', 'templates', 'fragmentGQL.txt'),
+              ).toString(),
+              {
+                fragmentName: fragmentName,
+                modelName: this.name,
+                fieldsList: fieldsListToString(fields),
+              },
+            ),
+            collectionName: this.getCollectionName(),
+            fragmentName: fragmentName,
+          },
+        )
+      }
     )
   }
 }
 
 /**
  * @param {Array<FragmentField>} fieldsList
+ * @param {number} depth
  * @returns {string}
  */
-function fieldsListToString(fieldsList) {
+function fieldsListToString(fieldsList, depth = 0) {
+  let spaces = '  '
+
+  for (let i = 0; i < depth; i++) {
+    spaces += '  '
+  }
+
   return fieldsList
     .map(f => {
       if (typeof f === 'string') {
-        return f
+        return `${spaces}${f}`
       } else {
         const fieldName = Object.keys(f)[0]
         if (!fieldName) {
           throw new Error('Missing field name for complex FieldDefinition')
         }
-        return `${fieldName} {${fieldsListToString(f[fieldName])}`
+        return `${spaces}${fieldName} {\n${fieldsListToString(f[fieldName], depth + 1)}\n}`
       }
     })
     .join('\n')

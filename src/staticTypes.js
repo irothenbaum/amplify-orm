@@ -1,5 +1,5 @@
 /*
-There are run time type definitions
+These are run time type definitions
  */
 
 /**

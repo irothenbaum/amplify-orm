@@ -2,10 +2,19 @@ const path = require('path')
 const fs = require('fs')
 const OutputDefinition = require('../models/OutputDefinition')
 
+let verbose = false
+global.LOG = function() {
+  if (verbose) {
+    console.log.apply(console, arguments)
+  }
+}
+
 async function build() {
   const configPath = path.join(process.cwd(), process.argv[2])
   console.log(`Loading config from: "${configPath}"`)
   const config = require(configPath)
+
+  verbose = !!config.debug
 
   const baseDir = path.dirname(configPath)
 
@@ -16,7 +25,7 @@ async function build() {
     config.hooks,
   )
 
-  console.log(def)
+  global.LOG(`Built OutputDefinition:`, def)
 
   const outputDir = path.join(process.cwd(), process.argv[3])
 
