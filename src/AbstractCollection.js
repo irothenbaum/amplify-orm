@@ -1,7 +1,6 @@
-const GQLQueryHelper = require('./GQLQueryHelper')
-const fragments = require('./fragments')
-const queries = require('./queryInputs') // a generated file
-const {capitalize, pluralizeCollection} = require('./utilities')
+const GQLQueryHelper = require('../GQLQueryHelper')
+const queries = require('../queryInputs')
+const {capitalize} = require('../utilities')
 
 /**
  * @param {string} queryName
@@ -31,7 +30,11 @@ class AbstractCollection {
    * @param {string?} fragmentName
    */
   constructor(fragmentName) {
-    this.fragmentName = fragmentName || fragments[this.constructor.name].DEFAULT
+    this.fragmentName = fragmentName || this.constructor.FragmentDefault
+
+    if (!this.fragmentName) {
+      throw new Error("Must initialize with a fragment and missing default fragment definition for collection " + this.constructor.name)
+    }
   }
 
   // -----------------------------------------------------------------------------------------------------------
@@ -193,3 +196,5 @@ class AbstractCollection {
     return new this(fragmentName)
   }
 }
+
+module.exports = AbstractCollection

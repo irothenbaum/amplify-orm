@@ -15,13 +15,31 @@ The output will be a folder with a bunch of models
 
  
 ## RunTime
+Every 
+
 Use like:
 ```javascript
 const {Post} = require('./build/collections')
 
 //....
 
+// load all posts with all fields (excluding connections)
 const allPosts = await Post.listPosts()
+
+// using a custom fragment
+const allPostsWithAuthor = await Post.as(Post.WithAuthor).listPosts()
+
+// using an indexed query
+const myPosts = await Post.listPostsByAuthor({authorId: 'xxxx'})
+
+// combining fragment and query to load all posts with author data in last 24 hours
+const recentPosts = await Post.as(Post.WithAuthor).listPosts({
+  input: {
+    createdAt: {
+      gt: new Date(Date.now() - 86400000)
+    }
+  }
+})
 ```
 
 ## Configuration
