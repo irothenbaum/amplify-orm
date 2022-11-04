@@ -11,12 +11,7 @@ class GQLResponse {
     let internalResponse = responseObj.data[wrapperName]
 
     this.nextToken = internalResponse && internalResponse.nextToken
-    this.payload = internalResponse
-      ? Object.prototype.hasOwnProperty.call(internalResponse, 'items')
-        ? // TODO: We should unwrap children
-          internalResponse.items
-        : internalResponse
-      : null
+    this.payload = unwrapItemsIfNeeded(internalResponse)
   }
 
   /**
@@ -35,4 +30,24 @@ class GQLResponse {
     return this.isList() && this.payload.length > 0
   }
 }
+
+/**
+ * @param {*} obj
+ */
+function unwrapItemsIfNeeded(obj) {
+  if (!obj || typeof obj !== 'object') {
+    return obj
+  }
+
+  // if this object has an items & nextToken prop, we return a simple array with only those items
+  if (Object.prototype.hasOwnProperty.call(obj, 'items') && Object.prototype.hasOwnProperty.call(obj, 'nextToken')) {
+    return obj.items.map(unwrapItemsIfNeeded)
+  }
+
+  return Object.keys(obj).reduce((agr, k) => {
+    agr[k] = unwrapItemsIfNeeded(obj[k])
+    return agr
+  }, {})
+}
+
 module.exports = GQLResponse
