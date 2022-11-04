@@ -16,6 +16,10 @@ class OutputDefinition {
    */
   constructor(models, inputTypes) {
     this.models = models
+    this.modelsLookup = models.reduce((agr, m) => {
+      agr[m.name] = m
+      return agr
+    },{})
     this.inputTypes = inputTypes
   }
 
@@ -23,11 +27,13 @@ class OutputDefinition {
    * @param {string} directory
    */
   writeFiles(directory) {
+    global.LOG(`Being writing files`)
     this._writeCollectionFiles(directory)
     this._writeQueryFiles(directory)
     this._writeDynamicStaticTypes(directory)
 
     this._copySrcFiles(directory)
+    global.LOG(`Done writing files`)
   }
 
 
@@ -137,7 +143,7 @@ class OutputDefinition {
           queryDefinitions: model.queries
             .map(def => def.toFunctionDefinition(model.getCollectionName()))
             .join('\n'),
-          fragmentsStr: model.getFragmentDefinitions()
+          fragmentsStr: model.getFragmentDefinitions(this.modelsLookup).join('\n')
         },
       ),
       {flag: 'w'}
@@ -149,7 +155,18 @@ class OutputDefinition {
    * @protected
    */
   _copySrcFiles(outputDir) {
-    // TODO: Copy the source files
+    global.LOG(`Copy src files to build folder`)
+    const srcDir = path.join(__dirname, '..','src')
+    const files = fs.readdirSync(srcDir)
+    for (let i = 0; i < files.length; i++) {
+      const fileName = files[i]
+
+      // copy our AbstractCollection.js file into the collections build folder
+      const outputFileName = fileName === 'AbstractCollection.js' ? path.join('collections', fileName) : fileName
+
+      fs.copyFileSync(path.join(srcDir, fileName), path.join(outputDir, outputFileName))
+      global.LOG(`Copied ${fileName} to ${outputFileName}`)
+    }
   }
 
   // ------------------------------------------------------------------------------------------

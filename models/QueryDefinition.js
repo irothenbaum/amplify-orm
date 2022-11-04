@@ -55,7 +55,7 @@ class QueryDefinition {
             
             return `${param}${isRequired ? '' : '?'}: ${type.replace('!', '')}`
           },
-        ).join(',\n')}}`,
+        ).join(', ')}}`,
         internalFunction: typeToInternalFunction[this.type],
       },
     )

@@ -13,9 +13,10 @@ class GeneratedModel {
 
     this.name = name
 
-    this.connectionFields = Object.keys(connections)
+    this.connections = connections
+    const connectionFields = Object.keys(this.connections)
     this.allFields = fields
-    this.primitiveFields = fields.filter(f => !this.connectionFields.includes(f))
+    this.primitiveFields = fields.filter(f => !connectionFields.includes(f))
 
     /** @type {Array<QueryDefinition>} */
     this.queries = []
@@ -52,10 +53,20 @@ class GeneratedModel {
    */
   addFragment(fragmentName, definition) {
     global.LOG(`Adding ${fragmentName} to ${this.name} model, ${definition.length} fields`)
-    const invalidDefinitions = definition.filter(f => {
-      // a connection field will only have one key and that is the field name
-      let fieldName = typeof f === 'string' ? f : Object.keys(f)[0]
-      return !this.allFields.includes(fieldName)
+    const invalidDefinitions = []
+    definition.forEach(f => {
+      if (typeof f === 'string') {
+        if (!this.allFields.includes(f)) {
+          invalidDefinitions.push(f)
+        }
+      } else {
+        Object.keys(f).forEach(con => {
+          if (!this.allFields.includes(con)) {
+            invalidDefinitions.push(con)
+          }
+        })
+
+      }
     })
 
     if (invalidDefinitions.length > 0) {
@@ -76,9 +87,10 @@ class GeneratedModel {
   }
 
   /**
+   * @param {Object<string, GeneratedModel>} allModels
    * @returns {Array<string>}
    */
-  getFragmentDefinitions() {
+  getFragmentDefinitions(allModels) {
     return Object.entries(this.fragments).map(
       ([fragmentName, fields]) => {
         // we return the fragmentConstant definition to be used in Collection
@@ -92,9 +104,10 @@ class GeneratedModel {
                 path.join(__dirname, '..', 'templates', 'fragmentGQL.txt'),
               ).toString(),
               {
-                fragmentName: fragmentName,
+                // the actual graphql fragment prepends the model name
+                fragmentName: `${this.name}${fragmentName}`,
                 modelName: this.name,
-                fieldsList: fieldsListToString(fields),
+                fieldsList: fieldsListToString(this.name, fields, allModels),
               },
             ),
             collectionName: this.getCollectionName(),
@@ -107,30 +120,57 @@ class GeneratedModel {
 }
 
 /**
+ * @param {string} modelName
  * @param {Array<FragmentField>} fieldsList
+ * @param {Object<string, GeneratedModel>} allModels
  * @param {number} depth
  * @returns {string}
  */
-function fieldsListToString(fieldsList, depth = 0) {
-  let spaces = '  '
+function fieldsListToString(modelName, fieldsList, allModels, depth = 1) {
+  let spaces = getSpacesFromDepth(depth)
 
-  for (let i = 0; i < depth; i++) {
-    spaces += '  '
-  }
+  global.LOG(`Building fields list with inputs:`, modelName, fieldsList, depth)
 
   return fieldsList
     .map(f => {
       if (typeof f === 'string') {
         return `${spaces}${f}`
       } else {
-        const fieldName = Object.keys(f)[0]
-        if (!fieldName) {
-          throw new Error('Missing field name for complex FieldDefinition')
+        const fieldNames = Object.keys(f)
+        if (fieldNames.length === 0) {
+          throw new Error('Missing field name(s) for complex FieldDefinition')
         }
-        return `${spaces}${fieldName} {\n${fieldsListToString(f[fieldName], depth + 1)}\n}`
+
+        return fieldNames.map(connectionName => {
+          const connectionType = allModels[modelName].connections[connectionName]
+
+          // if it starts with a [, then we need to build an items/list sub query
+          if (connectionType[0] === '[') {
+            const connectionTypeSingle = connectionType.slice(1, -1)
+            const extraSpaces = getSpacesFromDepth(depth + 1)
+            return `${spaces}${connectionName} {\n${extraSpaces}items {\n${fieldsListToString(connectionTypeSingle, f[connectionName], allModels, depth + 2)}\n${extraSpaces}}\n${extraSpaces}nextToken\n${spaces}}`
+
+          } else {
+            return `${spaces}${connectionName} {\n${fieldsListToString(connectionType, f[connectionName], allModels, depth + 1)}\n${spaces}}`
+          }
+
+        }).join('\n')
       }
     })
     .join('\n')
+}
+
+/**
+ * @param {number} depth -- 0 = 0 spaces
+ * @returns {string}
+ */
+function getSpacesFromDepth(depth) {
+  let spaces = ''
+
+  for (let i = 0; i < depth; i++) {
+    spaces += '  '
+  }
+  return spaces
 }
 
 module.exports = GeneratedModel

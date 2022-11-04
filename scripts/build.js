@@ -32,12 +32,16 @@ async function build() {
   console.log('Built, writing to ' + outputDir)
 
   if (fs.existsSync(outputDir)) {
+    global.LOG(`Build directory already exists, removing`)
     fs.rmSync(outputDir, {recursive:true,force:true})
   }
 
   fs.mkdirSync(outputDir)
+  global.LOG(`Created build directory`)
 
   def.writeFiles(outputDir)
+
+  console.log('Done')
 }
 
 build()

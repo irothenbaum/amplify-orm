@@ -13,7 +13,7 @@ class GQLResponse {
     this.nextToken = internalResponse && internalResponse.nextToken
     this.payload = internalResponse
       ? Object.prototype.hasOwnProperty.call(internalResponse, 'items')
-        ? // NOTE: this won't unwrap child items!
+        ? // TODO: We should unwrap children
           internalResponse.items
         : internalResponse
       : null

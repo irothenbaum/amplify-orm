@@ -59,7 +59,7 @@ function getModelFromMatch(modelName, modelDefinition) {
       const connection = getConnectionFromFieldValue(parts[1])
       if (connection) {
         global.LOG(`Determined ${parts[0]} is a connection:`, connection)
-        connection[parts[0]] = connection
+        connections[parts[0]] = connection
       }
 
       return parts[0]
@@ -73,7 +73,7 @@ function getModelFromMatch(modelName, modelDefinition) {
  * @returns {string|null}
  */
 function getConnectionFromFieldValue(val) {
-  const reg = new RegExp(`\\[*([A-Za-z]+)\\]*\\s@[a-zA-z]+`)
+  const reg = new RegExp(`(\\[*[A-Za-z]+\\]*)\\s@[a-zA-z]+`)
   const match = reg.exec(val)
   if (match) {
     return match[1]

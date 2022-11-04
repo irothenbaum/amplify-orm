@@ -2,6 +2,12 @@ const {API, graphqlOperation} = require('aws-amplify')
 const GQLResponse = require('./GQLResponse')
 const GQLQueryIterator = require('./GQLQueryIterator')
 
+/**
+ * @typedef QueryOptions
+ * @property {number} maxIterations
+ * @property {number} maxResults
+ */
+
 const DEFAULT_PARAMS = {
   nextToken: null,
   limit: 10000,

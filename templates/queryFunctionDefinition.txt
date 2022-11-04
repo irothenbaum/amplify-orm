@@ -1,21 +1,21 @@
-/**
- * @param { {{{inputType}}} } input
- * @param {QueryOptions?} options
- * @returns {Promise<*>}
- */
-async {{functionName}}(input, options) {
-  return this.{{internalFunction}}(
-     '{{queryName}}',
-     input,
-     this.fragmentName,
-     options,
-  )
-}
+  /**
+   * @param { {{{inputType}}} } input
+   * @param {QueryOptions?} options
+   * @returns {Promise<*>}
+   */
+  async {{functionName}}(input, options) {
+    return this.{{internalFunction}}(
+       '{{queryName}}',
+       input,
+       this.fragmentName,
+       options,
+    )
+  }
 
-/**
- * @param { {{{inputType}}} } input
- * @returns {Promise<*>}
- */
-static async {{functionName}}(input) {
-  return new this().{{functionName}}(input)
-}
+  /**
+   * @param { {{{inputType}}} } input
+   * @returns {Promise<*>}
+   */
+  static async {{functionName}}(input) {
+    return new this().{{functionName}}(input)
+  }

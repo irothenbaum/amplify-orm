@@ -7,10 +7,6 @@ class {{collectionName}} extends AbstractCollection {
   }
 
   {{{queryDefinitions}}}
-
-  _afterFind() {
-
-  }
 }
 
 {{{fragmentsStr}}}
