@@ -15,8 +15,21 @@ The output will be a folder with a bunch of models
 
  
 ## RunTime
-Every 
 
+### Initialization
+Before you can use the collections, you must first initialize the data layer using the `collections/index` -> `init` function.
+This function takes a single argument: the Amplify config file.
+It's recommended to initialize your collections as soon as possible after authentication is established.
+
+Example initialization call:
+```javascript
+const config = require('../src/aws-exports.js')
+const {init} = require('../build/collections')
+
+init(config)
+```
+
+### Using Collections
 Use like:
 ```javascript
 const {Post} = require('./build/collections')

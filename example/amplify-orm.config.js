@@ -9,8 +9,8 @@ module.exports = {
   srcSchema: './schema.graphql', // required* path to src schema
   buildSchema: './schema-build.graphql', // required* path to build schema,
 
-  fragments: require('./customFragments'),
-  hooks: require('./customHooks'),
+  fragments: require('./customFragments'), // could either be a file name relative to this config file that exports the definition or a literal object definition itself
+  hooks: './customHooks.js', // a file name relative to the config file that exports the definition
 
   debug: false, // if true, will print debug statements
 }

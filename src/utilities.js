@@ -15,7 +15,19 @@ function pluralizeCollection(str) {
   return str + 's'
 }
 
+/**
+ * @param {string} fieldType
+ * @returns {string}
+ */
+function getModelFromFieldType(fieldType) {
+  if (fieldType[0] === '[') {
+    return fieldType.slice(-1, 1)
+  }
+  return fieldType
+}
+
 module.exports = {
   capitalize,
   pluralizeCollection,
+  getModelFromFieldType,
 }

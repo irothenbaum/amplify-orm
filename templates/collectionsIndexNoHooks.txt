@@ -1,0 +1,24 @@
+{{{importsStr}}}
+const GraphQLHelper = require('../GQLQueryHelper')
+
+const allCollections = {
+{{{collectionNames}}}
+}
+
+const modelNameToCollectionMap = {}
+allCollections.forEach(c => {
+  modelNameToCollectionMap[c.modelName] = c
+  c.modelNameToCollectionMap =modelNameToCollectionMap
+})
+
+module.exports = {
+  ...allCollections,
+  modelNameToCollectionMap,
+  /**
+   * @param {*} config
+   */
+  init: (config) => {
+    // initialize our query helper
+    GraphQLHelper.Instance(config)
+  }
+}

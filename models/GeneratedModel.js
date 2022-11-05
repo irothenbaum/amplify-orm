@@ -9,7 +9,12 @@ class GeneratedModel {
    * @param {Object<string, string>} connections
    */
   constructor(name, fields, connections) {
-    global.LOG(`Generating model ${name} with inputs:`, name, fields, connections)
+    global.LOG(
+      `Generating model ${name} with inputs:`,
+      name,
+      fields,
+      connections,
+    )
 
     this.name = name
 
@@ -52,7 +57,9 @@ class GeneratedModel {
    * @param {Array<FragmentField>} definition
    */
   addFragment(fragmentName, definition) {
-    global.LOG(`Adding ${fragmentName} to ${this.name} model, ${definition.length} fields`)
+    global.LOG(
+      `Adding ${fragmentName} to ${this.name} model, ${definition.length} fields`,
+    )
     const invalidDefinitions = []
     definition.forEach(f => {
       if (typeof f === 'string') {
@@ -65,12 +72,15 @@ class GeneratedModel {
             invalidDefinitions.push(con)
           }
         })
-
       }
     })
 
     if (invalidDefinitions.length > 0) {
-      throw new Error(`Unknown field(s) in fragment definition: [${invalidDefinitions.join(', ')}]`)
+      throw new Error(
+        `Unknown field(s) in fragment definition: [${invalidDefinitions.join(
+          ', ',
+        )}]`,
+      )
     }
 
     this.fragments[fragmentName] = definition
@@ -91,31 +101,33 @@ class GeneratedModel {
    * @returns {Array<string>}
    */
   getFragmentDefinitions(allModels) {
-    return Object.entries(this.fragments).map(
-      ([fragmentName, fields]) => {
-        // we return the fragmentConstant definition to be used in Collection
-        return Mustache.render(
-          fs.readFileSync(
+    return Object.entries(this.fragments).map(([fragmentName, fields]) => {
+      // we return the fragmentConstant definition to be used in Collection
+      return Mustache.render(
+        fs
+          .readFileSync(
             path.join(__dirname, '..', 'templates', 'fragmentConstant.txt'),
-          ).toString(),
-          {
-            fragmentGQL: Mustache.render(
-              fs.readFileSync(
+          )
+          .toString(),
+        {
+          fragmentGQL: Mustache.render(
+            fs
+              .readFileSync(
                 path.join(__dirname, '..', 'templates', 'fragmentGQL.txt'),
-              ).toString(),
-              {
-                // the actual graphql fragment prepends the model name
-                fragmentName: `${this.name}${fragmentName}`,
-                modelName: this.name,
-                fieldsList: fieldsListToString(this.name, fields, allModels),
-              },
-            ),
-            collectionName: this.getCollectionName(),
-            fragmentName: fragmentName,
-          },
-        )
-      }
-    )
+              )
+              .toString(),
+            {
+              // the actual graphql fragment prepends the model name
+              fragmentName: `${this.name}${fragmentName}`,
+              modelName: this.name,
+              fieldsList: fieldsListToString(this.name, fields, allModels),
+            },
+          ),
+          collectionName: this.getCollectionName(),
+          fragmentName: fragmentName,
+        },
+      )
+    })
   }
 }
 
@@ -141,20 +153,31 @@ function fieldsListToString(modelName, fieldsList, allModels, depth = 1) {
           throw new Error('Missing field name(s) for complex FieldDefinition')
         }
 
-        return fieldNames.map(connectionName => {
-          const connectionType = allModels[modelName].connections[connectionName]
+        return fieldNames
+          .map(connectionName => {
+            const connectionType =
+              allModels[modelName].connections[connectionName]
 
-          // if it starts with a [, then we need to build an items/list sub query
-          if (connectionType[0] === '[') {
-            const connectionTypeSingle = connectionType.slice(1, -1)
-            const extraSpaces = getSpacesFromDepth(depth + 1)
-            return `${spaces}${connectionName} {\n${extraSpaces}items {\n${fieldsListToString(connectionTypeSingle, f[connectionName], allModels, depth + 2)}\n${extraSpaces}}\n${extraSpaces}nextToken\n${spaces}}`
-
-          } else {
-            return `${spaces}${connectionName} {\n${fieldsListToString(connectionType, f[connectionName], allModels, depth + 1)}\n${spaces}}`
-          }
-
-        }).join('\n')
+            // if it starts with a [, then we need to build an items/list sub query
+            if (connectionType[0] === '[') {
+              const connectionTypeSingle = connectionType.slice(1, -1)
+              const extraSpaces = getSpacesFromDepth(depth + 1)
+              return `${spaces}${connectionName} {\n${extraSpaces}items {\n${fieldsListToString(
+                connectionTypeSingle,
+                f[connectionName],
+                allModels,
+                depth + 2,
+              )}\n${extraSpaces}}\n${extraSpaces}nextToken\n${spaces}}`
+            } else {
+              return `${spaces}${connectionName} {\n${fieldsListToString(
+                connectionType,
+                f[connectionName],
+                allModels,
+                depth + 1,
+              )}\n${spaces}}`
+            }
+          })
+          .join('\n')
       }
     })
     .join('\n')

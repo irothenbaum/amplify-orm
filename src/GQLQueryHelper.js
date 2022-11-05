@@ -30,17 +30,31 @@ function handleQueryException(resp) {
 let instance
 
 class GQLQueryHelper {
+  /**
+   * @param {*} config
+   */
   constructor(config) {
     if (instance) {
       throw new Error('GQLQueryHelper is a Singleton')
     }
+    if (!config) {
+      throw new Error('Initialization of GQLQueryHelper requires a config')
+    }
     API.configure(config)
+    instance = this
   }
 
   /**
+   * @param {*?} config
    * @returns {GQLQueryHelper}
    */
-  static Instance() {
+  static Instance(config) {
+    if (!instance) {
+      if (!config) {
+        throw new Error('First call to Instance() requires a config')
+      }
+      return new GQLQueryHelper(config)
+    }
     return instance
   }
 
@@ -52,7 +66,6 @@ class GQLQueryHelper {
   async executeMutation(mutation, params) {
     return this.queryOnce(mutation, params)
   }
-
   /**
    * @param {string} query
    * @param {*?} params
@@ -93,6 +106,7 @@ class GQLQueryHelper {
           this.hasCompleted = true
         }
 
+        // if we were passed an after find function, we should invoke it
         return typeof afterFind === 'function'
           ? await afterFind(resp.payload)
           : resp.payload

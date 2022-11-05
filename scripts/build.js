@@ -3,7 +3,7 @@ const fs = require('fs')
 const OutputDefinition = require('../models/OutputDefinition')
 
 let verbose = false
-global.LOG = function() {
+global.LOG = function () {
   if (verbose) {
     console.log.apply(console, arguments)
   }
@@ -21,9 +21,15 @@ async function build() {
   const def = OutputDefinition.getFromSchema(
     path.join(baseDir, config.srcSchema),
     path.join(baseDir, config.buildSchema),
-    config.fragments,
-    config.hooks,
+    typeof config.fragments === 'string'
+      ? require(path.join(baseDir, config.fragments))
+      : config.fragments,
   )
+
+  if (!!config.hooks && typeof config.hooks !== 'string') {
+    throw new Error('hooks prop must be a file path')
+  }
+  def.setHooksPaths(path.join(baseDir, config.hooks))
 
   global.LOG(`Built OutputDefinition:`, def)
 
@@ -33,7 +39,7 @@ async function build() {
 
   if (fs.existsSync(outputDir)) {
     global.LOG(`Build directory already exists, removing`)
-    fs.rmSync(outputDir, {recursive:true,force:true})
+    fs.rmSync(outputDir, {recursive: true, force: true})
   }
 
   fs.mkdirSync(outputDir)

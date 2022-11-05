@@ -1,0 +1,30 @@
+{{{importsStr}}}
+const GraphQLHelper = require('../GQLQueryHelper')
+const customHooks = require('../customHooks')
+
+const allCollections = {
+{{{collectionNames}}}
+}
+
+const modelNameToCollectionMap = {}
+allCollections.forEach(c => {
+  modelNameToCollectionMap[c.modelName] = c
+
+  // every collection will keep a reference to this lookup to assist with calling query hooks on associated models
+  c.modelNameToCollectionMap = modelNameToCollectionMap
+})
+
+module.exports = {
+  ...allCollections,
+  modelNameToCollectionMap,
+  /**
+   * @param {*} config
+   */
+  init: (config) => {
+    // initialize our query helper
+    GraphQLHelper.Instance(config)
+
+    // set up our custom query hooks
+{{{setHooksForCollections}}}
+  }
+}

@@ -33,7 +33,10 @@ class AbstractCollection {
     this.fragmentName = fragmentName || this.constructor.FragmentDefault
 
     if (!this.fragmentName) {
-      throw new Error("Must initialize with a fragment and missing default fragment definition for collection " + this.constructor.name)
+      throw new Error(
+        'Must initialize with a fragment and missing default fragment definition for collection ' +
+          this.constructor.name,
+      )
     }
   }
 
@@ -55,11 +58,7 @@ class AbstractCollection {
       options,
     )
 
-    if (typeof this.afterFind === 'function') {
-      return retVal.map(r => this.afterFind(r))
-    }
-
-    return retVal
+    return retVal.map(r => this.constructor.afterFind(r))
   }
 
   /**
@@ -75,9 +74,7 @@ class AbstractCollection {
     return GQLQueryHelper.Instance().iterativeQuery(
       this._buildListQuery(queryName, fragmentName),
       inputs,
-      typeof this.afterFind === 'function'
-        ? this._afterFind.bind(this)
-        : undefined,
+      this.constructor.afterFind.bind(this),
     )
   }
 
@@ -96,11 +93,7 @@ class AbstractCollection {
       inputs,
     )
 
-    if (typeof this.afterFind === 'function') {
-      return this.afterFind(retVal)
-    }
-
-    return retVal
+    return this.constructor.afterFind(retVal)
   }
 
   /**
@@ -118,11 +111,7 @@ class AbstractCollection {
       inputs,
     )
 
-    if (typeof this.afterFind === 'function') {
-      return this.afterFind(retVal)
-    }
-
-    return retVal
+    return this.constructor.afterFind(retVal)
   }
 
   /**

@@ -1,13 +1,48 @@
 const {graphqlOperation} = require('aws-amplify')
 const AbstractCollection = require('./AbstractCollection')
+const {getModelFromFieldType} = require('../utilities')
 
 class {{collectionName}} extends AbstractCollection {
   constructor() {
     super()
+
+    this.modelName = "{{modelName}}"
   }
 
   {{{queryDefinitions}}}
+
+  // STATIC --------------------------------------------------------------
+  /**
+   * @param {*} obj
+   * @returns {*}
+   */
+  static afterFind(obj) {
+    Object.entries({{collectionName}}._connectionsMeta).forEach(([field, fieldType]) => {
+      // if this connected field is included in our response object
+      if (Object.hasOwnProperty.call(obj, field)) {
+        // we determine the correct model this field is connected to
+        const modelName = getModelFromFieldType(fieldType)
+
+        // load that models collection
+        const associatedCollection = {{collectionName}}.modelNameToCollectionMap[modelName]
+
+        // and invoke that collection's afterFind method.
+        // this allows any special query hook behavior for the associated collections to be applied to this payload as well
+        obj[field] = associatedCollection.afterFind(obj[field])
+      }
+    })
+
+    // lastly, we apply our own custom query hooks to this payload if one is specified
+    if (typeof {{collectionName}}.custom_afterFind === 'function') {
+      return {{collectionName}}.custom_afterFind(obj)
+    }
+
+    return obj
+  }
 }
+
+// this meta prop is used to call query hooks on associated models
+{{collectionName}}._connectionsMeta = {{{connectionsMap}}}
 
 {{{fragmentsStr}}}
 
