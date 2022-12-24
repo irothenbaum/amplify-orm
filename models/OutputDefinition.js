@@ -186,7 +186,10 @@ class OutputDefinition {
         {
           modelName: model.name,
           collectionName: model.getCollectionName(),
-          connectionsMap: JSON.stringify(model.connections),
+          complexFieldsMap: JSON.stringify(model.complexFields.reduce((agr, f) => {
+            agr[f] = model.fields[f]
+            return agr
+          }, {})),
           queryDefinitions: model.queries
             .map(def => def.toFunctionDefinition(model.getCollectionName()))
             .join('\n'),

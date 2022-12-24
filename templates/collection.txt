@@ -17,7 +17,7 @@ class {{collectionName}} extends AbstractCollection {
    * @returns {*}
    */
   static afterFind(obj) {
-    Object.entries({{collectionName}}._connectionsMeta).forEach(([field, fieldType]) => {
+    Object.entries({{collectionName}}._complexFields).forEach(([field, fieldType]) => {
       // if this connected field is included in our response object
       if (Object.hasOwnProperty.call(obj, field)) {
         // we determine the correct model this field is connected to
@@ -26,9 +26,11 @@ class {{collectionName}} extends AbstractCollection {
         // load that models collection
         const associatedCollection = {{collectionName}}.modelNameToCollectionMap[modelName]
 
-        // and invoke that collection's afterFind method.
-        // this allows any special query hook behavior for the associated collections to be applied to this payload as well
-        obj[field] = associatedCollection.afterFind(obj[field])
+        if (associatedCollection) {
+          // and invoke that collection's afterFind method.
+          // this allows any special query hook behavior for the associated collections to be applied to this payload as well
+          obj[field] = Array.isArray(obj[field]) ? obj[field].map(v => associatedCollection.afterFind(v)) : associatedCollection.afterFind(obj[field])
+        }
       }
     })
 
@@ -42,7 +44,7 @@ class {{collectionName}} extends AbstractCollection {
 }
 
 // this meta prop is used to call query hooks on associated models
-{{collectionName}}._connectionsMeta = {{{connectionsMap}}}
+{{collectionName}}._complexFields = {{{complexFieldsMap}}}
 
 {{{fragmentsStr}}}
 
