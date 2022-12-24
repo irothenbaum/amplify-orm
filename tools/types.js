@@ -34,7 +34,7 @@ const knownMap = {
   'AWSDate': 'string|Date',
   'AWSDateTime': 'string|Date',
   'Boolean': 'boolean',
-  'AWSJson': 'string',
+  'AWSJSON': 'string',
   'ModelAttributeTypes': 'string', // TODO: This is an enum. We should handle all Enums more formally
 }
 
