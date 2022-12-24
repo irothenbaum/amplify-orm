@@ -1,6 +1,4 @@
-const fs = require('fs')
-const path = require('path')
-const Mustache = require('mustache')
+const Templatize = require("../tools/templatize");
 
 class QueryDefinition {
   /**
@@ -41,10 +39,8 @@ class QueryDefinition {
    */
   toFunctionDefinition(collectionName) {
     global.LOG(`Generating function definition ${this.getFunctionName()} for query ${this.queryName}`)
-    return Mustache.render(
-      fs.readFileSync(
-        path.join(__dirname, '..', 'templates', 'queryFunctionDefinition.txt'),
-      ).toString(),
+    return Templatize.Instance().render(
+      'queryFunctionDefinition.txt',
       {
         collectionName: collectionName,
         functionName: this.getFunctionName(),

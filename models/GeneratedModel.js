@@ -1,27 +1,25 @@
-const fs = require('fs')
-const path = require('path')
-const Mustache = require('mustache')
+const {primitiveTypes} = require('../tools/types')
+const Templatize = require('../tools/templatize')
 
 class GeneratedModel {
   /**
    * @param {string} name
-   * @param {Array<string>} fields // TODO: This is just an array of field names, do we need field Types?
-   * @param {Object<string, string>} connections
+   * @param {Object<string, string>} fields // all the fields and their types as k:v pairs
    */
-  constructor(name, fields, connections) {
-    global.LOG(
-      `Generating model ${name} with inputs:`,
-      name,
-      fields,
-      connections,
-    )
+  constructor(name, fields) {
+    global.LOG(`Generating model ${name} with inputs:`, name, fields)
 
     this.name = name
 
-    this.connections = connections
-    const connectionFields = Object.keys(this.connections)
-    this.allFields = fields
-    this.primitiveFields = fields.filter(f => !connectionFields.includes(f))
+    this.fields = fields
+    this.allFields = Object.keys(fields)
+    this.primitiveFields = []
+    this.complexFields = []
+
+    this.allFields.forEach(f => {
+      // ignore if it's required or not when determining if its primitive
+      primitiveTypes.includes(fields[f].replace('!', '')) ? this.primitiveFields.push(f) : this.complexFields.push(f)
+    })
 
     /** @type {Array<QueryDefinition>} */
     this.queries = []
@@ -101,33 +99,27 @@ class GeneratedModel {
    * @returns {Array<string>}
    */
   getFragmentDefinitions(allModels) {
-    return Object.entries(this.fragments).map(([fragmentName, fields]) => {
-      // we return the fragmentConstant definition to be used in Collection
-      return Mustache.render(
-        fs
-          .readFileSync(
-            path.join(__dirname, '..', 'templates', 'fragmentConstant.txt'),
-          )
-          .toString(),
-        {
-          fragmentGQL: Mustache.render(
-            fs
-              .readFileSync(
-                path.join(__dirname, '..', 'templates', 'fragmentGQL.txt'),
-              )
-              .toString(),
-            {
-              // the actual graphql fragment prepends the model name
-              fragmentName: `${this.name}${fragmentName}`,
-              modelName: this.name,
-              fieldsList: fieldsListToString(this.name, fields, allModels),
-            },
-          ),
-          collectionName: this.getCollectionName(),
-          fragmentName: fragmentName,
-        },
-      )
-    })
+    return Object.entries(this.fragments).map(
+      ([fragmentName, fields]) => {
+        // we return the fragmentConstant definition to be used in Collection
+        return Templatize.Instance().render(
+          'fragmentConstant.txt',
+          {
+            fragmentGQL: Templatize.Instance().render(
+              'fragmentGQL.txt',
+              {
+                // the actual graphql fragment prepends the model name
+                fragmentName: `${this.name}${fragmentName}`,
+                modelName: this.name,
+                fieldsList: fieldsListToString(this.name, fields, allModels),
+              },
+            ),
+            collectionName: this.getCollectionName(),
+            fragmentName: fragmentName,
+          },
+        )
+      }
+    )
   }
 }
 
@@ -156,7 +148,7 @@ function fieldsListToString(modelName, fieldsList, allModels, depth = 1) {
         return fieldNames
           .map(connectionName => {
             const connectionType =
-              allModels[modelName].connections[connectionName]
+              allModels[modelName].fields[connectionName]
 
             // if it starts with a [, then we need to build an items/list sub query
             if (connectionType[0] === '[') {

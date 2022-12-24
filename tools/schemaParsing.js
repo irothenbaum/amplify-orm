@@ -14,11 +14,12 @@ function loadSchemaToString(schemaPath) {
 
 /**
  * @param {string} schemaStr
+ * @param {string} builtSchemaStr
  * @return {Array<GeneratedModel>}
  */
-function schemaToModels(schemaStr) {
+function schemaToModels(schemaStr, builtSchemaStr) {
   const reg = new RegExp(
-    `type[\\s]+([A-Za-z0-9]+)[\\s]+@model[\\s]+{([.\\s\\w\\d:!@\\[\\]]*)}`,
+    `type[\\s]+([A-Za-z0-9]+)[\\s]+@model`,
     'gmd',
   )
 
@@ -29,10 +30,10 @@ function schemaToModels(schemaStr) {
 
   for (const match of matches) {
     const modelName = match[1]
-    const modelDefinition = match[2]
-
-    retVal.push(getModelFromMatch(modelName, modelDefinition))
+    retVal.push(getModelFromMatch(modelName, builtSchemaStr))
   }
+
+  console.log(retVal)
 
   global.LOG(`Created ${retVal.length} generated models`)
 
@@ -41,44 +42,58 @@ function schemaToModels(schemaStr) {
 
 /**
  * @param {string} modelName
- * @param {string} modelDefinition
+ * @param {string} builtSchemaStr
  * @return {GeneratedModel}
  */
-function getModelFromMatch(modelName, modelDefinition) {
-  global.LOG(`Parsing model ${modelName}:`, modelDefinition)
-  const connections = {}
-  const params = modelDefinition
+function getModelFromMatch(modelName, builtSchemaStr) {
+  global.LOG(`Parsing model ${modelName}`)
+
+  const reg = new RegExp(`type ${modelName} {\\s?([.\\sa-zA-Z0-9:!(,)\\[\\]]+)}`,'m')
+  const matche = builtSchemaStr.match(reg)
+
+  if (!matche) {
+    throw new Error(`Could not get model ${modelName} from schema`)
+  }
+
+  const filedsStr = matche[1]
+  global.LOG(`Found fields str:`, filedsStr)
+
+  const params = filedsStr
     .split('\n')
     .map(kvpair => kvpair.trim())
     .filter(v => !!v)
-    .map(kvpair => {
+    .reduce((agr, kvpair) => {
       const parts = kvpair.split(':').map(v => v.trim())
 
       global.LOG(`Found field parts: `, parts)
 
-      const connection = getConnectionFromFieldValue(parts[1])
-      if (connection) {
-        global.LOG(`Determined ${parts[0]} is a connection:`, connection)
-        connections[parts[0]] = connection
+      let dataType = parts[parts.length - 1]
+      let name = parts[0]
+      let nameIndexOfParenthesis = name.indexOf('(')
+      if (nameIndexOfParenthesis > 0) {
+        name = name.substr(0, nameIndexOfParenthesis)
       }
 
-      return parts[0]
-    })
+      dataType = normalizeDataTypeIfNeeded(dataType)
+      agr[name] = dataType
 
-  return new GeneratedModel(modelName, params, connections)
+      return agr
+    }, {})
+
+  return new GeneratedModel(modelName, params)
 }
 
 /**
  * @param {string} val
  * @returns {string|null}
  */
-function getConnectionFromFieldValue(val) {
-  const reg = new RegExp(`(\\[*[A-Za-z]+\\]*)\\s@[a-zA-z]+`)
+function normalizeDataTypeIfNeeded(val) {
+  const reg = new RegExp(`Model([A-Za-z0-9]+)Connection`)
   const match = reg.exec(val)
   if (match) {
-    return match[1]
+    return `[${match[1]}]`
   }
-  return null
+  return val
 }
 
 // ------------------------------------------------------------------------------------------

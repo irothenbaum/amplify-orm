@@ -1,6 +1,6 @@
 const fs = require('fs')
 const path = require('path')
-const Mustache = require('mustache')
+const Templatize = require('../tools/templatize')
 const {convertDynamoTypeToJSDoc} = require('../tools/types')
 const {
   loadSchemaToString,
@@ -65,12 +65,8 @@ class OutputDefinition {
     // next we create the query definition file
     fs.writeFileSync(
       path.join(this.outputDirectory, 'queryInputs.js'),
-      Mustache.render(
-        fs
-          .readFileSync(
-            path.join(__dirname, '..', 'templates', 'genericModule.txt'),
-          )
-          .toString(),
+      Templatize.Instance().render(
+        'genericModule.txt',
         {
           importsStr: '',
           exportStr: `{\n${this.models
@@ -95,30 +91,20 @@ class OutputDefinition {
 
     fs.writeFileSync(
       path.join(this.outputDirectory, 'dynamicTypes.js'),
-      inputTypeNames
-        .map(name => {
-          global.LOG(`Writing ${name} type:`, this.inputTypes[name])
-          return Mustache.render(
-            fs
-              .readFileSync(
-                path.join(__dirname, '..', 'templates', 'typeDefinition.txt'),
-              )
-              .toString(),
-            {
-              typeName: name,
-              propertiesStr: Object.entries(this.inputTypes[name])
-                .map(([param, type]) => {
-                  const isRequired = type.includes('!')
-                  return `  @property {${convertDynamoTypeToJSDoc(
-                    type.replace('!', ''),
-                  )}${isRequired ? '' : '?'}} ${param}`
-                })
-                .join('\n'),
-            },
-          )
-        })
-        .join('\n\n'),
-      {flag: 'w'},
+      inputTypeNames.map(name => {
+        global.LOG(`Writing ${name} type:`, this.inputTypes[name])
+        return Templatize.Instance().render(
+          'typeDefinition.txt',
+          {
+            typeName: name,
+            propertiesStr: Object.entries(this.inputTypes[name]).map(([param, type]) => {
+              const isRequired = type.includes('!')
+              return `  @property {${convertDynamoTypeToJSDoc(type.replace('!', ''))}${isRequired ? '' : '?'}} ${param}`
+            }).join('\n')
+          },
+        )
+      }).join('\n\n'),
+      {flag: 'w'}
     )
   }
 
@@ -141,12 +127,8 @@ class OutputDefinition {
     // First we build the models folder index file
     fs.writeFileSync(
       path.join(this.outputDirectory, 'collections', 'index.js'),
-      Mustache.render(
-        fs
-          .readFileSync(
-            path.join(__dirname, '..', 'templates', collectionsIndexFile),
-          )
-          .toString(),
+      Templatize.Instance().render(
+        collectionsIndexFile,
         Object.assign(
           {
             importsStr: this.models
@@ -199,12 +181,8 @@ class OutputDefinition {
     // Here we build each model's collection module
     fs.writeFileSync(
       collectionPath,
-      Mustache.render(
-        fs
-          .readFileSync(
-            path.join(__dirname, '..', 'templates', 'collection.txt'),
-          )
-          .toString(),
+      Templatize.Instance().render(
+        'collection.txt',
         {
           modelName: model.name,
           collectionName: model.getCollectionName(),
@@ -274,7 +252,7 @@ class OutputDefinition {
     global.LOG(`Loaded build schema from ${builtSchemaPath}`)
 
     // get our basic models
-    const models = schemaToModels(srcSchemaStr)
+    const models = schemaToModels(srcSchemaStr, builtSchemaStr)
 
     // apply the input types
     addQueriesToModels(builtSchemaStr, models)
