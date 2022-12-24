@@ -34,6 +34,7 @@ class GQLQueryHelper {
     if (instance) {
       throw new Error('GQLQueryHelper is a Singleton')
     }
+    instance = this
     API.configure(config)
   }
 

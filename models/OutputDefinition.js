@@ -1,6 +1,6 @@
 const fs = require('fs')
 const path = require('path')
-const Mustache = require('mustache')
+const Templatize = require('../tools/templatize')
 const {convertDynamoTypeToJSDoc} = require('../tools/types')
 const {
   loadSchemaToString,
@@ -49,10 +49,8 @@ class OutputDefinition {
     // next we create the query definition file
     fs.writeFileSync(
       path.join(outputDir, 'queryInputs.js'),
-      Mustache.render(
-        fs.readFileSync(
-          path.join(__dirname, '..', 'templates', 'genericModule.txt'),
-        ).toString(),
+      Templatize.Instance().render(
+        'genericModule.txt',
         {
           importsStr: '',
           exportStr: `{\n${this.models.map(m => m.queries.map(q => `  ${q.toQueryParamDefinition()}`).join(',\n')).join(',\n')}\n}`,
@@ -75,10 +73,8 @@ class OutputDefinition {
       path.join(outputDir, 'dynamicTypes.js'),
       inputTypeNames.map(name => {
         global.LOG(`Writing ${name} type:`, this.inputTypes[name])
-        return Mustache.render(
-          fs.readFileSync(
-            path.join(__dirname, '..', 'templates', 'typeDefinition.txt'),
-          ).toString(),
+        return Templatize.Instance().render(
+          'typeDefinition.txt',
           {
             typeName: name,
             propertiesStr: Object.entries(this.inputTypes[name]).map(([param, type]) => {
@@ -105,10 +101,8 @@ class OutputDefinition {
     // First we build the models folder index file
     fs.writeFileSync(
       path.join(outputDir, 'collections', 'index.js'),
-      Mustache.render(
-        fs.readFileSync(
-          path.join(__dirname, '..', 'templates', 'genericModule.txt'),
-        ).toString(),
+      Templatize.Instance().render(
+        'genericModule.txt',
         {
           importsStr: this.models.map(m => `const ${m.getCollectionName()} = require('./${m.getCollectionName()}.js')`).join('\n'),
           exportStr: `{\n${this.models.map(m => `  ${m.getCollectionName()}`)}\n}`
@@ -134,10 +128,8 @@ class OutputDefinition {
     // Here we build each model's collection module
     fs.writeFileSync(
       collectionPath,
-      Mustache.render(
-        fs.readFileSync(
-          path.join(__dirname, '..', 'templates', 'collection.txt'),
-        ).toString(),
+      Templatize.Instance().render(
+        'collection.txt',
         {
           collectionName: model.getCollectionName(),
           queryDefinitions: model.queries
@@ -187,7 +179,7 @@ class OutputDefinition {
     global.LOG(`Loaded build schema from ${builtSchemaPath}`)
 
     // get our basic models
-    const models = schemaToModels(srcSchemaStr)
+    const models = schemaToModels(srcSchemaStr, builtSchemaStr)
 
     // apply the input types
     addQueriesToModels(builtSchemaStr, models)

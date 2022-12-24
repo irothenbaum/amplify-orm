@@ -34,9 +34,11 @@ const knownMap = {
   'AWSDate': 'string|Date',
   'AWSDateTime': 'string|Date',
   'Boolean': 'boolean',
-  // 'AWSJson': 'string|*', ???
+  'AWSJson': 'string',
   'ModelAttributeTypes': 'string', // TODO: This is an enum. We should handle all Enums more formally
 }
+
+const primitiveTypes = Object.keys(knownMap)
 
 /**
  * @param {string} type
@@ -54,5 +56,5 @@ function convertDynamoTypeToJSDoc(type) {
 
 module.exports = {
   convertDynamoTypeToJSDoc,
-
+  primitiveTypes
 }
