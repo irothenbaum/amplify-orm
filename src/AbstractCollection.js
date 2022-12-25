@@ -25,6 +25,14 @@ function getInputStrings(queryName) {
   return [inputsTopLevel, inputsInner]
 }
 
+/**
+ * @param {string} def
+ * @returns {string}
+ */
+function getFragmentNameFromDefinition(def) {
+  return def.split('on')[0].trim().substr(9)
+}
+
 class AbstractCollection {
   /**
    * @param {string?} fragmentName
@@ -122,13 +130,14 @@ class AbstractCollection {
    */
   _buildListQuery(queryName, fragment) {
     const [inputsTopLevel, inputsInner] = getInputStrings(queryName)
+    const fragmentName = getFragmentNameFromDefinition(fragment)
 
     return `
       ${fragment}
       query ${capitalize(queryName)}(${inputsTopLevel.join(', ')}) {
         ${queryName}(${inputsInner.join(', ')}) {
           items {
-            ...${fragment}
+            ...${fragmentName}
           }
           nextToken
         }
@@ -144,12 +153,13 @@ class AbstractCollection {
    */
   _buildGetQuery(queryName, fragment) {
     const [inputsTopLevel, inputsInner] = getInputStrings(queryName)
+    const fragmentName = getFragmentNameFromDefinition(fragment)
 
     return `
       ${fragment}
       query ${capitalize(queryName)}(${inputsTopLevel.join(', ')}) {
         ${queryName}(${inputsInner.join(', ')}) {
-          ...${fragment}
+          ...${fragmentName}
         }
       }
     `
@@ -163,12 +173,13 @@ class AbstractCollection {
    */
   _buildMutation(queryName, fragment) {
     const [inputsTopLevel, inputsInner] = getInputStrings(queryName)
+    const fragmentName = getFragmentNameFromDefinition(fragment)
 
     return `
       ${fragment}
       mutation ${capitalize(queryName)}(${inputsTopLevel.join(', ')}) {
         ${queryName}(${inputsInner.join(', ')}) {
-          ...${fragment}
+          ...${fragmentName}
         }
       }
     `

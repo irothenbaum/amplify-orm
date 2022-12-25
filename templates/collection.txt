@@ -1,10 +1,9 @@
-const {graphqlOperation} = require('aws-amplify')
 const AbstractCollection = require('./AbstractCollection')
 const {getModelFromFieldType} = require('../utilities')
 
 class {{collectionName}} extends AbstractCollection {
-  constructor() {
-    super()
+  constructor(fragment) {
+    super(fragment)
 
     this.modelName = "{{modelName}}"
   }

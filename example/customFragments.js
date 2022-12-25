@@ -1,7 +1,4 @@
 module.exports = {
-  Resident: {
-    Test: ['id','displayName',{occupancy: ['id', 'yardiId', {unit: ['id', 'number']}]}]
-  },
   Blog: {
     JustID: ['id'],
     SuperDeepNested: [

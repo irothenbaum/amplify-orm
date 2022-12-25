@@ -16,6 +16,10 @@ The output will be a folder with a bunch of models
  
 ## RunTime
 
+### Dependencies
+graphl-tag
+aws-amplify
+
 ### Initialization
 Before you can use the collections, you must first initialize the data layer using the `collections/index` -> `init` function.
 This function takes a single argument: the Amplify config file.

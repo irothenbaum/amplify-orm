@@ -13,5 +13,9 @@
     "eslint": "^8.6.0",
     "mustache": "^4.2.0",
     "prettier": "^2.5.1"
+  },
+  "dependencies": {
+    "aws-amplify": "^5.0.7",
+    "graphql-tag": "^2.12.6"
   }
 }

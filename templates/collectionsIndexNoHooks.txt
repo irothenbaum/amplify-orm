@@ -6,7 +6,7 @@ const allCollections = {
 }
 
 const modelNameToCollectionMap = {}
-allCollections.forEach(c => {
+Object.values(allCollections).forEach(c => {
   modelNameToCollectionMap[c.modelName] = c
   c.modelNameToCollectionMap =modelNameToCollectionMap
 })

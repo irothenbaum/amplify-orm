@@ -7,7 +7,7 @@ const allCollections = {
 }
 
 const modelNameToCollectionMap = {}
-allCollections.forEach(c => {
+Object.values(allCollections).forEach(c => {
   modelNameToCollectionMap[c.modelName] = c
 
   // every collection will keep a reference to this lookup to assist with calling query hooks on associated models

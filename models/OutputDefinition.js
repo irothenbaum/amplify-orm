@@ -15,6 +15,7 @@ class OutputDefinition {
    * @param {Object<string, Object<string, string>>} inputTypes
    */
   constructor(models, inputTypes) {
+    models.sort((a,b) => a.name < b.name ? -1 : a.name > b.name ? 1 : 0)
     this.models = models
     this.modelsLookup = models.reduce((agr, m) => {
       agr[m.name] = m

@@ -179,7 +179,9 @@ function addQueriesOrMutationsToModels(type, schemaStr, models) {
 
       // every list query will also have an iterative query
       if (queryType === QueryDefinition.TYPE_QUERY_LIST) {
-        new QueryDefinition(QueryDefinition.TYPE_QUERY_ITERATIVE, queryName, partsStr)
+        model.addQueryDefinition(
+          new QueryDefinition(QueryDefinition.TYPE_QUERY_ITERATIVE, queryName, partsStr)
+        )
       }
     } else {
       global.LOG(`WARNING: Missing model`)

@@ -1,4 +1,5 @@
 const {API, graphqlOperation} = require('aws-amplify')
+const {gql} = require('graphql-tag') // I'm not sure why this needs to be imported like this. should just be `const gql = ...`?
 const GQLResponse = require('./GQLResponse')
 const GQLQueryIterator = require('./GQLQueryIterator')
 
@@ -73,7 +74,7 @@ class GQLQueryHelper {
    */
   async queryOnce(query, params) {
     try {
-      let response = await API.graphql(graphqlOperation(query, params))
+      let response = await API.graphql(graphqlOperation(this._formatQueryString(query), params))
       return new GQLResponse(response).payload
     } catch (resp) {
       handleQueryException(resp)
@@ -87,6 +88,7 @@ class GQLQueryHelper {
    * @returns {GQLQueryIterator}
    */
   iterativeQuery(query, params, afterFind) {
+    const queryFormatted = this._formatQueryString(query)
     return new GQLQueryIterator(async function () {
       if (this.hasCompleted) {
         return []
@@ -94,7 +96,7 @@ class GQLQueryHelper {
 
       try {
         let response = await API.graphql(
-          graphqlOperation(query, {
+          graphqlOperation(queryFormatted, {
             ...params,
             nextToken: this.nextToken,
           }),
@@ -134,10 +136,11 @@ class GQLQueryHelper {
     // merge this params with our defaults
     params = Object.assign({}, DEFAULT_PARAMS, params)
 
+    const queryFormatted = this._formatQueryString(query)
     try {
       do {
         // execute our query
-        let responseRaw = await API.graphql(graphqlOperation(query, params))
+        let responseRaw = await API.graphql(graphqlOperation(queryFormatted, params))
         let response = new GQLResponse(responseRaw)
 
         // store our items into our results array
@@ -166,6 +169,19 @@ class GQLQueryHelper {
       handleQueryException(resp)
     }
     return result.slice(0, maximumResults)
+  }
+
+  /**
+   * @param {string} query
+   * @returns {any}
+   * @private
+   */
+  _formatQueryString(query) {
+    if (typeof query === 'string') {
+      return gql`${query}`
+    } else {
+      return query
+    }
   }
 
   // ---------------------------------------------------------------
