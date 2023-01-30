@@ -40,6 +40,15 @@ class {{collectionName}} extends AbstractCollection {
 
     return obj
   }
+
+  /**
+   * @override
+   * @param {string?} fragmentName
+   * @returns { {{collectionName}} }
+   */
+  static as(fragmentName) {
+    return new this(fragmentName)
+  }
 }
 
 // this meta prop is used to call query hooks on associated models

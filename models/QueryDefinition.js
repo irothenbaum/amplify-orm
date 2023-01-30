@@ -39,6 +39,10 @@ class QueryDefinition {
    */
   toFunctionDefinition(collectionName) {
     global.LOG(`Generating function definition ${this.getFunctionName()} for query ${this.queryName}`)
+
+    // if any params are required, then the input object is required
+    const inputIsRequired = Object.values(this.params).some(type => type.includes('!'))
+
     return Templatize.Instance().render(
       'queryFunctionDefinition.txt',
       {
@@ -51,7 +55,7 @@ class QueryDefinition {
             
             return `${param}${isRequired ? '' : '?'}: ${type.replace('!', '')}`
           },
-        ).join(', ')}}`,
+        ).join(', ')}${inputIsRequired ? '' : '?'}}`,
         internalFunction: typeToInternalFunction[this.type],
       },
     )

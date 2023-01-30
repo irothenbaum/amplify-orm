@@ -33,8 +33,6 @@ function schemaToModels(schemaStr, builtSchemaStr) {
     retVal.push(getModelFromMatch(modelName, builtSchemaStr))
   }
 
-  console.log(retVal)
-
   global.LOG(`Created ${retVal.length} generated models`)
 
   return retVal

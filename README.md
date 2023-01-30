@@ -16,9 +16,9 @@ The output will be a folder with a bunch of models
  
 ## RunTime
 
-### Dependencies
-graphl-tag
-aws-amplify
+### Project Dependencies
+- graphl-tag
+- aws-amplify
 
 ### Initialization
 Before you can use the collections, you must first initialize the data layer using the `collections/index` -> `init` function.
@@ -151,3 +151,7 @@ fragment UserWithEmployer on User {
 ```
 
 Notice the `one to many` association between employer and products is handled automatically and abstracted from the fragment definition.
+
+### TODO:
+- ID input types should be treated like strings
+- Output folder should be specified in the config file, not the second CLI param
