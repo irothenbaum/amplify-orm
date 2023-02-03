@@ -1,21 +1,25 @@
 {
-  "name": "amplify-orm",
-  "version": "1.0.0",
+  "name": "@rxr/amplify-orm",
+  "version": "1.0.1",
   "description": "",
   "main": "index.js",
+  "keywords": ["amplify", "orm"],
+  "homepage": "https://github.com/irothenbaum/amplify-orm#readme",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/irothenbaum/amplify-orm"
+  },
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "test": "echo \"Error: no test specified\"",
     "example": "node scripts/build.js example/amplify-orm.config.js build"
   },
-  "author": "",
+  "author": "RXR Realty",
   "license": "ISC",
+  "dependencies": {
+    "mustache": "^4.2.0"
+  },
   "devDependencies": {
     "eslint": "^8.6.0",
-    "mustache": "^4.2.0",
     "prettier": "^2.5.1"
-  },
-  "dependencies": {
-    "aws-amplify": "^5.0.7",
-    "graphql-tag": "^2.12.6"
   }
 }

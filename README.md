@@ -17,8 +17,8 @@ The output will be a folder with a bunch of models
 ## RunTime
 
 ### Project Dependencies
-- graphl-tag
-- aws-amplify
+- "aws-amplify": "^5.0.7",
+- "graphql-tag": "^2.12.6"
 
 ### Initialization
 Before you can use the collections, you must first initialize the data layer using the `collections/index` -> `init` function.
