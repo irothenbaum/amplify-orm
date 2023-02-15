@@ -17,7 +17,6 @@ The output will be a folder with a bunch of models
 ## RunTime
 
 ### Project Dependencies
-- "aws-amplify": "^5.0.7",
 - "graphql-tag": "^2.12.6"
 
 ### Initialization
@@ -27,10 +26,24 @@ It's recommended to initialize your collections as soon as possible after authen
 
 Example initialization call:
 ```javascript
+const AWSAppSyncClient = require('aws-appsync').default
 const config = require('../src/aws-exports.js')
 const {init} = require('../build/collections')
 
-init(config)
+const client = new AWSAppSyncClient(
+  {
+    url: config.aws_appsync_graphqlEndpoint,
+    region: config.aws_appsync_region,
+    auth: {
+      type: 'AMAZON_COGNITO_USER_POOLS',
+      jwtToken: '/* Your auth Token */',
+    },
+    disableOffline: true,
+  }
+)
+
+// handle session/token refresh in this callback function
+init(() => client)
 ```
 
 ### Using Collections

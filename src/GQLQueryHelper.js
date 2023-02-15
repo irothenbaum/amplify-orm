@@ -1,7 +1,12 @@
-const {API, graphqlOperation} = require('aws-amplify')
 const {gql} = require('graphql-tag') // I'm not sure why this needs to be imported like this. should just be `const gql = ...`?
 const GQLResponse = require('./GQLResponse')
 const GQLQueryIterator = require('./GQLQueryIterator')
+
+/**
+ * Auth callback to generate a new AWSAppSyncClient.
+ * @callback AWSAppSyncClientFactory
+ * @returns {AWSAppSyncClient}
+ */
 
 /**
  * @typedef QueryOptions
@@ -32,16 +37,16 @@ let instance
 
 class GQLQueryHelper {
   /**
-   * @param {*} config
+   * @param {AWSAppSyncClientFactory} ensureClient
    */
-  constructor(config) {
+  constructor(ensureClient) {
     if (instance) {
       throw new Error('GQLQueryHelper is a Singleton')
     }
-    if (!config) {
-      throw new Error('Initialization of GQLQueryHelper requires a config')
+    if (!ensureClient) {
+      throw new Error('Initialization of GQLQueryHelper requires an AppSync client factory')
     }
-    API.configure(config)
+    this.__ensureClient = ensureClient
     instance = this
   }
 
@@ -65,7 +70,13 @@ class GQLQueryHelper {
    * @returns {Promise<*>}
    */
   async executeMutation(mutation, params) {
-    return this.queryOnce(mutation, params)
+    try {
+      const client = this.__ensureClient()
+      let response = await client.mutate({mutation: this._formatQueryString(mutation), variables: params})
+      return new GQLResponse(response).payload
+    } catch (resp) {
+      handleQueryException(resp)
+    }
   }
   /**
    * @param {string} query
@@ -74,7 +85,8 @@ class GQLQueryHelper {
    */
   async queryOnce(query, params) {
     try {
-      let response = await API.graphql(graphqlOperation(this._formatQueryString(query), params))
+      const client = this.__ensureClient()
+      let response = await client.query({query: this._formatQueryString(query), variables: params})
       return new GQLResponse(response).payload
     } catch (resp) {
       handleQueryException(resp)
@@ -95,12 +107,11 @@ class GQLQueryHelper {
       }
 
       try {
-        let response = await API.graphql(
-          graphqlOperation(queryFormatted, {
+        const client = this.__ensureClient()
+        let response = await client.query({query: queryFormatted, variables: {
             ...params,
             nextToken: this.nextToken,
-          }),
-        )
+          }})
         const resp = new GQLResponse(response)
         this.nextToken = resp.nextToken
 
@@ -126,6 +137,7 @@ class GQLQueryHelper {
    * @returns {Promise<Array<*>>}
    */
   async queryAll(query, params, options) {
+    const client = this.__ensureClient()
     let maximumResults =
       (options && options.maxResults) || DEFAULT_MAXIMUM_RESULTS
     let maximumIterations =
@@ -140,7 +152,7 @@ class GQLQueryHelper {
     try {
       do {
         // execute our query
-        let responseRaw = await API.graphql(graphqlOperation(queryFormatted, params))
+        let responseRaw = await client.query({query: queryFormatted, variables: params})
         let response = new GQLResponse(responseRaw)
 
         // store our items into our results array
@@ -188,11 +200,11 @@ class GQLQueryHelper {
   // STATIC FUNCTIONS:
 
   /**
-   * @param {*} config
+   * @param {AWSAppSyncClientFactory} ensureClient
    * @returns {GQLQueryHelper}
    */
-  static init(config) {
-    return new GQLQueryHelper(config)
+  static init(ensureClient) {
+    return new GQLQueryHelper(ensureClient)
   }
 }
 
