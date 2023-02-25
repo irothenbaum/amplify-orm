@@ -10,7 +10,7 @@ global.LOG = function () {
 }
 
 async function build() {
-  const configPath = path.join(process.cwd(), process.argv[2])
+  const configPath = path.resolve(process.cwd(), process.argv[2])
   console.log(`Loading config from: "${configPath}"`)
   const config = require(configPath)
 
@@ -19,10 +19,10 @@ async function build() {
   const baseDir = path.dirname(configPath)
 
   const def = OutputDefinition.getFromSchema(
-    path.join(baseDir, config.srcSchema),
-    path.join(baseDir, config.buildSchema),
+    path.resolve(baseDir, config.srcSchema),
+    path.resolve(baseDir, config.buildSchema),
     typeof config.fragments === 'string'
-      ? require(path.join(baseDir, config.fragments))
+      ? require(path.resolve(baseDir, config.fragments))
       : config.fragments,
   )
 
@@ -31,14 +31,14 @@ async function build() {
   }
 
   if (config.hooks) {
-    def.setHooksPaths(path.join(baseDir, config.hooks))
+    def.setHooksPaths(path.resolve(baseDir, config.hooks))
   }
 
   def.setUseEMS(config.useESM || false)
 
   global.LOG(`Built OutputDefinition:`, def)
 
-  const outputDir = path.join(process.cwd(), process.argv[3])
+  const outputDir = path.resolve(process.cwd(), process.argv[3])
 
   console.log('Built, writing to ' + outputDir)
 

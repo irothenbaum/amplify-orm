@@ -1,6 +1,6 @@
 {
   "name": "@rxr/amplify-orm",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "description": "",
   "main": "index.js",
   "keywords": ["amplify", "orm", "aws", "appsync", "graphql"],
