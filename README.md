@@ -165,6 +165,10 @@ fragment UserWithEmployer on User {
 
 Notice the `one to many` association between employer and products is handled automatically and abstracted from the fragment definition.
 
+### Module syntax
+By default, the exported collections use CommonJS syntax, Set the `useESM` property to `true` in the config file to enable ESM syntax.
+
 ### TODO:
 - ID input types should be treated like strings
 - Output folder should be specified in the config file, not the second CLI param
+- Support building output as an npm package

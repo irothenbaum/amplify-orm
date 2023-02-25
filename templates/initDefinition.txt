@@ -1,0 +1,10 @@
+/**
+ * @param {*} config
+ */
+function init(config) {
+  // initialize our query helper
+  GraphQLHelper.Instance(config)
+
+  // set up our custom query hooks
+{{{setHooksForCollections}}}
+}

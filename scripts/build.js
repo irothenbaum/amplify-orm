@@ -29,7 +29,12 @@ async function build() {
   if (!!config.hooks && typeof config.hooks !== 'string') {
     throw new Error('hooks prop must be a file path')
   }
-  def.setHooksPaths(path.join(baseDir, config.hooks))
+
+  if (config.hooks) {
+    def.setHooksPaths(path.join(baseDir, config.hooks))
+  }
+
+  def.setUseEMS(config.useESM || false)
 
   global.LOG(`Built OutputDefinition:`, def)
 

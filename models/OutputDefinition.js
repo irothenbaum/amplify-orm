@@ -25,6 +25,13 @@ class OutputDefinition {
   }
 
   /**
+   * @param {boolean} b
+   */
+  setUseEMS(b) {
+    this.useESM = b
+  }
+
+  /**
    * @param {string} directory
    */
   writeFiles(directory) {
@@ -118,54 +125,67 @@ class OutputDefinition {
 
     global.LOG(`Created collections folder`)
 
-    const hasHooks = !!this.hooksPath
-    const collectionsIndexFile = hasHooks
-      ? 'collectionsIndex.txt'
-      : 'collectionsIndexNoHooks.txt'
-
-    global.LOG(`Using collections/index template ${collectionsIndexFile}`)
-
     // First we build the models folder index file
     fs.writeFileSync(
       path.join(this.outputDirectory, 'collections', 'index.js'),
-      Templatize.Instance().render(
-        collectionsIndexFile,
-        Object.assign(
-          {
-            importsStr: this.models
-              .map(
-                m =>
-                  `const ${m.getCollectionName()} = require('./${m.getCollectionName()}.js')`,
-              )
-              .join('\n'),
-            collectionNames: this.models
-              .map(m => `  ${m.getCollectionName()}`)
-              .join(',\n'),
-          },
-          hasHooks
-            ? {
-                setHooksForCollections: this.models
-                  .map(m => {
-                    return `    if (customHooks['${
-                      m.name
-                    }']) { Object.keys(customHooks['${
-                      m.name
-                    }']).forEach(h => {${m.getCollectionName()}['custom_'+h] = customHooks['${
-                      m.name
-                    }'][h]}) } `
-                  })
-                  .join('\n'),
-              }
-            : undefined,
+      this._renderModule({
+        GraphQLHelper: '../GQLQueryHelper',
+        ...(this.hooksPath ? {customHooks: '../customHooks'} : {}), // only load custome hooks if we have them
+          ...this.models
+            .reduce((agr, m) => {
+              agr[m.getCollectionName()] = `./${m.getCollectionName()}`
+              return agr
+            }, {})
+      }, Templatize.Instance().render(
+          'collectionsIndex.txt',
+          Object.assign(
+            {
+              importsStr: this.models
+                .map(
+                  m =>
+                    `const ${m.getCollectionName()} = require('./${m.getCollectionName()}.js')`,
+                )
+                .join('\n'),
+              collectionNames: this.models
+                .map(m => `  ${m.getCollectionName()}`)
+                .join(',\n'),
+              initDefinition: this.getInitDefinition(!!this.hooksPath)
+            },
+          ),
         ),
-      ),
-      {flag: 'w'},
-    )
+        [
+          '...allCollections',
+          'modelNameToCollectionMap',
+          'init'
+        ],
+      ), {flag: 'w'})
+
 
     global.LOG(`Created collections/index.js`)
 
     // next we create each individual model file
     this.models.forEach(m => this._writeSingleCollectionFile(m))
+  }
+
+  /**
+   * @param {boolean} hasHooks
+   * @returns {string}
+   */
+  getInitDefinition(hasHooks) {
+    return Templatize.Instance().render('initDefinition.txt', {
+      setHooksForCollections: hasHooks ? this.models
+        .map(m => {
+          return `  if (customHooks['${
+            m.name
+          }']) { Object.keys(customHooks['${
+            m.name
+          }']).forEach(h => {${m.getCollectionName()}['custom_'+h] = customHooks['${
+            m.name
+          }'][h]}) } `
+        })
+        .join('\n') : '  // No custom hooks defined',
+    })
+
   }
 
   /**
@@ -182,6 +202,10 @@ class OutputDefinition {
     // Here we build each model's collection module
     fs.writeFileSync(
       collectionPath,
+      this._renderModule({
+          AbstractCollection: './AbstractCollection',
+          '{getModelFromFieldType}': '../utilities',
+        },
       Templatize.Instance().render(
         'collection.txt',
         {
@@ -199,8 +223,9 @@ class OutputDefinition {
             .join('\n'),
         },
       ),
-      {flag: 'w'},
-    )
+        model.getCollectionName()
+      ,
+    ), {flag: 'w'})
   }
 
   /**
@@ -237,6 +262,45 @@ class OutputDefinition {
       path.join(this.outputDirectory, 'customHooks.js'),
     )
     global.LOG(`Copied custom hooks file`)
+  }
+
+  /**
+   * @param {Object<string, string>} imports
+   * @param {string} code
+   * @param {string|Array<string>} exports
+   * @returns {string}
+   * @private
+   */
+  _renderModule(imports, code, exports) {
+    global.LOG(`Creating module with imports/exports`, imports, exports)
+    return Templatize.Instance().render('genericModule.txt', {
+        importsStr: this._getImportDefinition(imports),
+        code: code,
+        exportStr: this._getExportDefinition(exports)
+      }
+    )
+  }
+
+  /**
+   * @param {Object<string, string>} imports
+   * @returns {string}
+   * @private
+   */
+  _getImportDefinition(imports) {
+    const func = this.useESM ? (name, library) => `import ${name} from '${library}'` : (name, library) => `const ${name} = require('${library}')`
+    return Object.entries(imports).reduce((agr, tuple) => {
+      return `${agr}${func(tuple[0], tuple[1])}\n`
+    }, '')
+  }
+
+  /**
+   * This function assumes if it's a single string then it's a default export
+   * @param {string|Array<string>} exports
+   * @private
+   */
+  _getExportDefinition(exports) {
+    const exportObj = Array.isArray(exports) ? `{\n  ${exports.join(',\n  ')}\n}` : exports
+    return this.useESM ? `export default ${exportObj}` : `module.exports = ${exportObj}`
   }
 
   // ------------------------------------------------------------------------------------------
