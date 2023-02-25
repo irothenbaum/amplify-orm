@@ -1,7 +1,3 @@
-const {gql} = require('graphql-tag') // I'm not sure why this needs to be imported like this. should just be `const gql = ...`?
-const GQLResponse = require('./GQLResponse')
-const GQLQueryIterator = require('./GQLQueryIterator')
-
 /**
  * Auth callback to generate a new AWSAppSyncClient.
  * @callback AWSAppSyncClientFactory
@@ -208,4 +204,3 @@ class GQLQueryHelper {
   }
 }
 
-module.exports = GQLQueryHelper

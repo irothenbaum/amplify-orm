@@ -17,7 +17,7 @@ class {{collectionName}} extends AbstractCollection {
       // if this connected field is included in our response object
       if (Object.hasOwnProperty.call(obj, field)) {
         // we determine the correct model this field is connected to
-        const modelName = getModelFromFieldType(fieldType)
+        const modelName = utilities.getModelFromFieldType(fieldType)
 
         // load that models collection
         const associatedCollection = {{collectionName}}.modelNameToCollectionMap[modelName]

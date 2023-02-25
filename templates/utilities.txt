@@ -26,8 +26,3 @@ function getModelFromFieldType(fieldType) {
   return fieldType
 }
 
-module.exports = {
-  capitalize,
-  pluralizeCollection,
-  getModelFromFieldType,
-}

@@ -50,4 +50,3 @@ function unwrapItemsIfNeeded(obj) {
   }, {})
 }
 
-module.exports = GQLResponse

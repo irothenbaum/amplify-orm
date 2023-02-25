@@ -13,8 +13,9 @@ async function build() {
   const configPath = path.resolve(process.cwd(), process.argv[2])
   console.log(`Loading config from: "${configPath}"`)
   const config = require(configPath)
-
   verbose = !!config.debug
+
+  global.LOG(`Using config: `, config)
 
   const baseDir = path.dirname(configPath)
 

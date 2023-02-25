@@ -28,7 +28,7 @@ class Templatize {
    */
   getTemplateStr(templateName) {
     if (!this._templateCache[templateName]) {
-      const templatePath = path.join(__dirname, '..', 'templates', templateName)
+      const templatePath = Templatize.getTemplateFilePath(templateName)
       if (!fs.existsSync(templatePath)) {
         throw new Error(`Cannot find template file named ${templateName}`)
       }
@@ -44,6 +44,17 @@ class Templatize {
     }
     return instance
   }
+
+  /**
+   * @param {string} fileName
+   * @returns {string}
+   */
+  static getTemplateFilePath(fileName) {
+    return path.join(Templatize.TEMPLATE_PATH, fileName)
+
+  }
 }
+
+Templatize.TEMPLATE_PATH = path.join(__dirname, '..', 'templates')
 
 module.exports = Templatize

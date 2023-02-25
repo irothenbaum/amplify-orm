@@ -8,6 +8,7 @@ const {
   addQueriesToModels,
   getInputTypeDefinitions,
 } = require('../tools/schemaParsing')
+const QueryDefinition = require("../models/QueryDefinition")
 
 class OutputDefinition {
   /**
@@ -51,7 +52,7 @@ class OutputDefinition {
       global.LOG(`No custom hooks specified, skipping`)
     }
 
-    this._copySrcFiles()
+    this._generateSrcFiles()
     global.LOG(`Done writing files`)
   }
 
@@ -73,16 +74,11 @@ class OutputDefinition {
     // next we create the query definition file
     fs.writeFileSync(
       path.join(this.outputDirectory, 'queryInputs.js'),
-      Templatize.Instance().render(
-        'genericModule.txt',
-        {
-          importsStr: '',
-          exportStr: `{\n${this.models
-            .map(m =>
-              m.queries.map(q => `  ${q.toQueryParamDefinition()}`).join(',\n'),
-            )
-            .join(',\n')}\n}`,
-        },
+      this._renderModule({}, '', this.models
+        .reduce((agr, m) =>
+          // do not include iterative queries since they're redundant to the list ones
+          agr.concat(m.queries.filter(q => q.type !== QueryDefinition.TYPE_QUERY_LIST).map(q => q.toQueryParamDefinition()))
+        , [])
       ),
       {flag: 'w'},
     )
@@ -204,7 +200,7 @@ class OutputDefinition {
       collectionPath,
       this._renderModule({
           AbstractCollection: './AbstractCollection',
-          '{getModelFromFieldType}': '../utilities',
+          'utilities': '../utilities',
         },
       Templatize.Instance().render(
         'collection.txt',
@@ -229,27 +225,98 @@ class OutputDefinition {
   }
 
   /**
+   * These files are ready to go, just need to have their imports/exports generated according to ESM setting
    * @protected
    */
-  _copySrcFiles() {
-    global.LOG(`Copy src files to build folder`)
-    const srcDir = path.join(__dirname, '..', 'src')
-    const files = fs.readdirSync(srcDir)
-    for (let i = 0; i < files.length; i++) {
-      const fileName = files[i]
+  _generateSrcFiles() {
+    global.LOG(`Generating src files and saving to build folder`)
 
-      // copy our AbstractCollection.js file into the collections build folder
-      const outputFileName =
-        fileName === 'AbstractCollection.js'
-          ? path.join('collections', fileName)
-          : fileName
+    // --------------------------------------------------------------------------------------------------
 
-      fs.copyFileSync(
-        path.join(srcDir, fileName),
-        path.join(this.outputDirectory, outputFileName),
-      )
-      global.LOG(`Copied ${fileName} to ${outputFileName}`)
-    }
+    // first write Abstract Collection
+    global.LOG(`Writing AbstractCollection model`)
+
+    fs.writeFileSync(
+      path.join(
+        this.outputDirectory,
+        'collections',
+        'AbstractCollection.js',
+      ),
+      this._renderModule(
+        {GQLQueryHelper: '../GQLQueryHelper', queries: '../queryInputs', 'utilities': '../utilities'},
+        fs.readFileSync(Templatize.getTemplateFilePath('AbstractCollection.txt')).toString(),
+        'AbstractCollection'),
+      {flag: 'w'}
+    )
+
+    // --------------------------------------------------------------------------------------------------
+
+    // Next, write the GQLHelper
+    global.LOG(`Writing GQLQueryHelper model`)
+    fs.writeFileSync(
+      path.join(
+        this.outputDirectory,
+        'GQLQueryHelper.js',
+      ),
+      this._renderModule(
+        {gql: 'graphql-tag', GQLResponse: './GQLResponse', GQLQueryIterator: './GQLQueryIterator'},
+        fs.readFileSync(Templatize.getTemplateFilePath('GQLQueryHelper.txt')).toString(),
+        'GQLQueryHelper'),
+      {flag: 'w'}
+    )
+
+    // --------------------------------------------------------------------------------------------------
+
+    // Next, write the GQLIterator
+    global.LOG(`Writing GQLQueryIterator model`)
+    fs.writeFileSync(
+      path.join(
+        this.outputDirectory,
+        'GQLQueryIterator.js',
+      ),
+      this._renderModule(
+        {},
+        fs.readFileSync(Templatize.getTemplateFilePath('GQLQueryIterator.txt')).toString(),
+        'GQLQueryIterator'),
+      {flag: 'w'}
+    )
+
+    // --------------------------------------------------------------------------------------------------
+
+    // Next, write the GQLResponse
+    global.LOG(`Writing GQLResponse model`)
+    fs.writeFileSync(
+      path.join(
+        this.outputDirectory,
+        'GQLResponse.js',
+      ),
+      this._renderModule(
+        {},
+        fs.readFileSync(Templatize.getTemplateFilePath('GQLResponse.txt')).toString(),
+        'GQLResponse'),
+      {flag: 'w'}
+    )
+
+
+    // --------------------------------------------------------------------------------------------------
+
+    // Last, write utilities
+    global.LOG(`Writing utilities library`)
+    fs.writeFileSync(
+      path.join(
+        this.outputDirectory,
+        'utilities.js',
+      ),
+      this._renderModule(
+        {},
+        fs.readFileSync(Templatize.getTemplateFilePath('utilities.txt')).toString(),
+        [
+          'capitalize',
+          'pluralizeCollection',
+          'getModelFromFieldType',
+        ]),
+      {flag: 'w'}
+    )
   }
 
   /**
