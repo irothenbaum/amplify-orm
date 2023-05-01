@@ -26,6 +26,7 @@ function getInputStrings(queryName) {
  * @returns {string}
  */
 function getFragmentNameFromDefinition(def) {
+  // TODO: There's a bug here. Should find last occurrence of 'on' in case fragment name is "ResidentConnection" for example
   return def.split('on')[0].trim().substr(9)
 }
 
