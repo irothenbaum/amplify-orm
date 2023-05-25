@@ -136,34 +136,55 @@ function fieldsListToString(modelName, fieldsList, allModels, depth = 1) {
   global.LOG(`Building fields list with inputs:`, modelName, fieldsList, depth)
 
   return fieldsList
-    .map(f => {
-      if (typeof f === 'string') {
-        return `${spaces}${f}`
+    .map(singleField => {
+      if (typeof singleField === 'string') {
+        global.LOG(`Adding field "${singleField}" for "${modelName}"`)
+        return `${spaces}${singleField}`
       } else {
-        const fieldNames = Object.keys(f)
+        const fieldNames = Object.keys(singleField)
         if (fieldNames.length === 0) {
           throw new Error('Missing field name(s) for complex FieldDefinition')
         }
+        global.LOG(`Building complex fields for "${modelName}" with field names:`, fieldNames)
 
         return fieldNames
           .map(connectionName => {
             const connectionType =
               allModels[modelName].fields[connectionName]
 
-            // if it starts with a [, then we need to build an items/list sub query
+            global.LOG(`Building complex field "${connectionName}" for "${modelName}" with type: ${connectionType}`)
+            console.log(allModels[modelName].fields)
+
+            // if it starts with a [, then we need to build a sub query
             if (connectionType[0] === '[') {
               const connectionTypeSingle = connectionType.slice(1, -1)
-              const extraSpaces = getSpacesFromDepth(depth + 1)
-              return `${spaces}${connectionName} {\n${extraSpaces}items {\n${fieldsListToString(
-                connectionTypeSingle,
-                f[connectionName],
-                allModels,
-                depth + 2,
-              )}\n${extraSpaces}}\n${extraSpaces}nextToken\n${spaces}}`
+              global.LOG(`This connection is an array of "${connectionTypeSingle}"`)
+
+              // if this connection type is a model (it's a key on the allModels object)
+              // then the sub query needs to be wrapped in an item/nextToken structure
+              if (Object.prototype.hasOwnProperty.call(allModels, connectionTypeSingle)) {
+                global.LOG(`"${connectionTypeSingle}" is a model, so wrapping in items/nextToken structure`)
+                const extraSpaces = getSpacesFromDepth(depth + 1)
+                return `${spaces}${connectionName} {\n${extraSpaces}items {\n${fieldsListToString(
+                  connectionTypeSingle,
+                  singleField[connectionName],
+                  allModels,
+                  depth + 2,
+                )}\n${extraSpaces}}\n${extraSpaces}nextToken\n${spaces}}`
+              } else {
+                global.LOG(`"${connectionTypeSingle}" is NOT a model, building a simple sub query`)
+                // in this case, the connection is just a complex object so the sub query only specifies that object's fields
+                // and is NOT wrapped in an items/nextToken structure
+                return `${spaces}${connectionName} {\n${fieldsListToString(connectionTypeSingle,
+                  singleField[connectionName],
+                  allModels,
+                  depth + 1)}\n${spaces}}`
+              }
             } else {
+              global.LOG(`This connection is not an array, building a simple sub query`)
               return `${spaces}${connectionName} {\n${fieldsListToString(
                 connectionType,
-                f[connectionName],
+                singleField[connectionName],
                 allModels,
                 depth + 1,
               )}\n${spaces}}`
