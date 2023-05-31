@@ -153,7 +153,6 @@ function fieldsListToString(modelName, fieldsList, allModels, depth = 1) {
               allModels[modelName].fields[connectionName]
 
             global.LOG(`Building complex field "${connectionName}" for "${modelName}" with type: ${connectionType}`)
-            console.log(allModels[modelName].fields)
 
             // if it starts with a [, then we need to build a sub query
             if (connectionType[0] === '[') {
