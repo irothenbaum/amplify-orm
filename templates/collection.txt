@@ -1,13 +1,10 @@
 class {{collectionName}} extends AbstractCollection {
-  constructor(fragment) {
-    super(fragment)
-
-    this.modelName = "{{modelName}}"
-  }
 
   {{{queryDefinitions}}}
 
   // STATIC --------------------------------------------------------------
+  static modelName = "{{modelName}}"
+
   /**
    * @param {*} obj
    * @returns {*}
