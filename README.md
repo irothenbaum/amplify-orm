@@ -169,6 +169,8 @@ Notice the `one to many` association between employer and products is handled au
 By default, the exported collections use CommonJS syntax, Set the `useESM` property to `true` in the config file to enable ESM syntax.
 
 ### TODO:
+- Allow user to reduce the final set of models included 
+    - e.g., my client only needs 4 of the 100 collections, so only include those in output
 - ID input types should be treated like strings
 - Output folder should be specified in the config file, not the second CLI param
 - Support building output as an npm package

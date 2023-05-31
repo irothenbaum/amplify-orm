@@ -21,7 +21,7 @@ function pluralizeCollection(str) {
  */
 function getModelFromFieldType(fieldType) {
   if (fieldType[0] === '[') {
-    return fieldType.slice(-1, 1)
+    return fieldType.slice(1, -1)
   }
   return fieldType
 }

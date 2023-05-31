@@ -18,6 +18,12 @@ function loadSchemaToString(schemaPath) {
  * @return {Array<GeneratedModel>}
  */
 function schemaToModels(schemaStr, builtSchemaStr) {
+  /*
+    TODO: If there's a comment between type and @model definition, this will break.e.eg:
+      type User
+      # this is a comment
+      @model
+   */
   const reg = new RegExp(
     `type[\\s]+([A-Za-z0-9]+)[\\s]+@model`,
     'gmd',
