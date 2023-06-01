@@ -39,7 +39,7 @@ class GQLQueryHelper {
     if (instance) {
       throw new Error('GQLQueryHelper is a Singleton')
     }
-    if (!ensureClient) {
+    if (!ensureClient || typeof ensureClient !== 'function') {
       throw new Error('Initialization of GQLQueryHelper requires an AppSync client factory')
     }
     this.__ensureClient = ensureClient
@@ -67,7 +67,7 @@ class GQLQueryHelper {
    */
   async executeMutation(mutation, params) {
     try {
-      const client = this.__ensureClient()
+      const client = await this.__ensureClient()
       let response = await client.mutate({mutation: this._formatQueryString(mutation), variables: params})
       return new GQLResponse(response).payload
     } catch (resp) {
@@ -81,7 +81,7 @@ class GQLQueryHelper {
    */
   async queryOnce(query, params) {
     try {
-      const client = this.__ensureClient()
+      const client = await this.__ensureClient()
       let response = await client.query({query: this._formatQueryString(query), variables: params})
       return new GQLResponse(response).payload
     } catch (resp) {
@@ -134,7 +134,7 @@ class GQLQueryHelper {
    * @returns {Promise<Array<*>>}
    */
   async queryAll(query, params, options) {
-    const client = this.__ensureClient()
+    const client = await this.__ensureClient()
     let maximumResults =
       (options && options.maxResults) || DEFAULT_MAXIMUM_RESULTS
     let maximumIterations =
