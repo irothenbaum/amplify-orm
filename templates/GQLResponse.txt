@@ -36,7 +36,7 @@ class GQLResponse {
  */
 function unwrapItemsIfNeeded(obj) {
   if (!obj || typeof obj !== 'object' || Array.isArray(obj)) {
-    return obj;
+    return obj
   }
 
   // if this object has an items & nextToken prop, we return a simple array with only those items
