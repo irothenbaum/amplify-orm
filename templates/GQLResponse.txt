@@ -35,7 +35,7 @@ class GQLResponse {
  * @param {*} obj
  */
 function unwrapItemsIfNeeded(obj) {
-  if (!obj || typeof obj !== 'object') {
+  if (!obj || typeof obj !== 'object' || Array.isArray(obj)) {
     return obj
   }
 
