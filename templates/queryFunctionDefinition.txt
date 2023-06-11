@@ -1,7 +1,7 @@
   /**
    * @param { {{{inputType}}} } input
    * @param {QueryOptions?} options
-   * @returns {Promise<*>}
+   * @returns {Promise<{{{returnType}}}>}
    */
   async {{functionName}}(input, options) {
     return this.{{internalFunction}}(
@@ -14,7 +14,7 @@
 
   /**
    * @param { {{{inputType}}} } input
-   * @returns {Promise<*>}
+   * @returns {Promise<{{{returnType}}}>}
    */
   static async {{functionName}}(input) {
     return new this().{{functionName}}(input)

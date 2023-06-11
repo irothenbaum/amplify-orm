@@ -57,6 +57,7 @@ class QueryDefinition {
           },
         ).join(', ')}${inputIsRequired ? '' : '?'}}`,
         internalFunction: typeToInternalFunction[this.type],
+        returnType: typeToReturnType[this.type],
       },
     )
   }
@@ -80,6 +81,13 @@ const typeToInternalFunction = {
   [QueryDefinition.TYPE_QUERY_LIST]: '_list',
   [QueryDefinition.TYPE_QUERY_ONE]: '_get',
   [QueryDefinition.TYPE_QUERY_ITERATIVE]: '_iterate',
+}
+
+const typeToReturnType = {
+  [QueryDefinition.TYPE_MUTATION]: '*',
+  [QueryDefinition.TYPE_QUERY_LIST]: 'Array<*>',
+  [QueryDefinition.TYPE_QUERY_ONE]: '*',
+  [QueryDefinition.TYPE_QUERY_ITERATIVE]: 'GQLQueryIterator',
 }
 
 module.exports = QueryDefinition
