@@ -5,8 +5,9 @@ class GeneratedModel {
   /**
    * @param {string} name
    * @param {Object<string, string>} fields // all the fields and their types as k:v pairs
+   * @param {Object<string, Array<string>>} knownEnums // all the known enums as name:options paris
    */
-  constructor(name, fields) {
+  constructor(name, fields, knownEnums) {
     global.LOG(`Generating model ${name} with inputs:`, name, fields)
 
     this.name = name
@@ -16,9 +17,11 @@ class GeneratedModel {
     this.primitiveFields = []
     this.complexFields = []
 
+    const allPrimitiveTypes = primitiveTypes.concat(Object.keys(knownEnums))
+
     this.allFields.forEach(f => {
       // ignore if it's required or not when determining if its primitive
-      primitiveTypes.includes(fields[f].replace('!', '')) ? this.primitiveFields.push(f) : this.complexFields.push(f)
+      allPrimitiveTypes.includes(fields[f].replace('!', '')) ? this.primitiveFields.push(f) : this.complexFields.push(f)
     })
 
     /** @type {Array<QueryDefinition>} */

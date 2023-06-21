@@ -14,10 +14,34 @@ function loadSchemaToString(schemaPath) {
 
 /**
  * @param {string} schemaStr
+ * @returns {Object<string, Array<string>>} // keyed by enum name, value is array of enum values
+ */
+function findEnumsInSchema(schemaStr) {
+  const reg = new RegExp(
+    `enum[\\s]+([A-Za-z0-9]+)[\\s]+{([\\w\\s.]+)}`,
+    'gmd',
+  )
+
+  const matches = schemaStr.matchAll(reg)
+  global.LOG(`Found ${matches.length} enums`)
+
+  const retVal = {}
+  for (const match of matches) {
+    retVal[match[1]] = match[2].split(' ').map(s => s.trim()).filter((s) => !!s)
+  }
+
+  global.LOG(`Found ${Object.keys(retVal).length} enums`, retVal)
+
+  return retVal
+}
+
+/**
+ * @param {string} schemaStr
  * @param {string} builtSchemaStr
+ * @param {Object<string, Array<string>>} enums
  * @return {Array<GeneratedModel>}
  */
-function schemaToModels(schemaStr, builtSchemaStr) {
+function schemaToModels(schemaStr, builtSchemaStr, enums) {
   /*
     TODO: If there's a comment between type and @model definition, this will break.e.eg:
       type User
@@ -36,7 +60,7 @@ function schemaToModels(schemaStr, builtSchemaStr) {
 
   for (const match of matches) {
     const modelName = match[1]
-    retVal.push(getModelFromMatch(modelName, builtSchemaStr))
+    retVal.push(getModelFromMatch(modelName, builtSchemaStr, enums))
   }
 
   global.LOG(`Created ${retVal.length} generated models`)
@@ -47,9 +71,10 @@ function schemaToModels(schemaStr, builtSchemaStr) {
 /**
  * @param {string} modelName
  * @param {string} builtSchemaStr
+ * @param {Object<string, Array<string>>} enums
  * @return {GeneratedModel}
  */
-function getModelFromMatch(modelName, builtSchemaStr) {
+function getModelFromMatch(modelName, builtSchemaStr, enums) {
   global.LOG(`Parsing model ${modelName}`)
 
   const reg = new RegExp(`type ${modelName} {\\s?([.\\sa-zA-Z0-9:!(,)\\[\\]]+)}`,'m')
@@ -84,7 +109,7 @@ function getModelFromMatch(modelName, builtSchemaStr) {
       return agr
     }, {})
 
-  return new GeneratedModel(modelName, params)
+  return new GeneratedModel(modelName, params, enums)
 }
 
 /**
@@ -240,4 +265,5 @@ module.exports = {
   schemaToModels,
   addQueriesToModels,
   getInputTypeDefinitions,
+  findEnumsInSchema
 }

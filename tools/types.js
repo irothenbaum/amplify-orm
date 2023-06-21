@@ -35,7 +35,6 @@ const knownMap = {
   'AWSDateTime': 'string|Date',
   'Boolean': 'boolean',
   'AWSJSON': 'string',
-  'ModelAttributeTypes': 'string', // TODO: This is an enum. We should handle all Enums more formally
 }
 
 const primitiveTypes = Object.keys(knownMap)

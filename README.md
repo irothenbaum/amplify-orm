@@ -7,6 +7,8 @@ Use like:
 
 i.e.: `node scripts/build ./amplify-orm.config.js ./build`
 
+Before you run the build script, make sure your compiled schema is up to date using `amplify api gql-compile`
+
 ### Output
 The output will be a folder with a bunch of models
 
@@ -174,3 +176,5 @@ By default, the exported collections use CommonJS syntax, Set the `useESM` prope
 - ID input types should be treated like strings
 - Output folder should be specified in the config file, not the second CLI param
 - Support building output as an npm package
+- Still doing a lot of `.map().join('\n')`, but would like to move that into the template itself
+  - e.g.: `{{#items}}{{.}}{{/items}}` instead of `items.join('\n')`

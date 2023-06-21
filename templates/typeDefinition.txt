@@ -1,4 +1,6 @@
 /**
-  @typedef {{{typeName}}}
-{{{propertiesStr}}}
+ * @typedef {{typeName}}
+{{#properties}}
+ * @property { {{{type}}}{{^isRequired}}?{{/isRequired}} } {{param}}
+{{/properties}}
  */

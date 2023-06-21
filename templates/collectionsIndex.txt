@@ -1,5 +1,7 @@
 const allCollections = {
-{{{collectionNames}}}
+{{#collectionNames}}
+  {{.}},
+{{/collectionNames}}
 }
 
 const modelNameToCollectionMap = {}

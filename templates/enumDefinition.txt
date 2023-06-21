@@ -1,0 +1,9 @@
+/**
+ * @readonly
+ * @enum {string}
+ */
+const {{enumName}} = {
+{{#enumValues}}
+  {{.}}: '{{.}}',
+{{/enumValues}}
+}

@@ -7,9 +7,17 @@ type Blog {
   updatedAt: AWSDateTime!
 }
 
+enum PostType {
+  OPINION
+  CURRENT_EVENTS
+  RESEARCH
+  OTHER
+}
+
 type Post {
   id: ID!
   title: String!
+  type: PostType!
   blog: Blog
   comments(filter: ModelCommentFilterInput, sortDirection: ModelSortDirection, limit: Int, nextToken: String): ModelCommentConnection
   createdAt: AWSDateTime!

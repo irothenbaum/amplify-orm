@@ -7,6 +7,7 @@ const {
   schemaToModels,
   addQueriesToModels,
   getInputTypeDefinitions,
+  findEnumsInSchema,
 } = require('../tools/schemaParsing')
 const QueryDefinition = require("../models/QueryDefinition")
 
@@ -14,8 +15,9 @@ class OutputDefinition {
   /**
    * @param {Array<GeneratedModel>} models
    * @param {Object<string, Object<string, string>>} inputTypes
+   * @param {Object<string, Array<string>>} enums
    */
-  constructor(models, inputTypes) {
+  constructor(models, inputTypes, enums) {
     models.sort((a,b) => a.name < b.name ? -1 : a.name > b.name ? 1 : 0)
     this.models = models
     this.modelsLookup = models.reduce((agr, m) => {
@@ -23,6 +25,7 @@ class OutputDefinition {
       return agr
     }, {})
     this.inputTypes = inputTypes
+    this.knownEnums = enums
   }
 
   /**
@@ -89,6 +92,7 @@ class OutputDefinition {
    */
   _writeDynamicStaticTypes() {
     const inputTypeNames = Object.keys(this.inputTypes)
+    const enumNames = Object.keys(this.knownEnums)
     global.LOG(
       `Writing ${inputTypeNames.length} Input types to dynamicTypes.js`,
     )
@@ -101,13 +105,26 @@ class OutputDefinition {
           'typeDefinition.txt',
           {
             typeName: name,
-            propertiesStr: Object.entries(this.inputTypes[name]).map(([param, type]) => {
+            properties: Object.entries(this.inputTypes[name]).map(([param, type]) => {
               const isRequired = type.includes('!')
-              return `  @property {${convertDynamoTypeToJSDoc(type.replace('!', ''))}${isRequired ? '' : '?'}} ${param}`
-            }).join('\n')
+              return {
+                type: convertDynamoTypeToJSDoc(type.replace('!', '')),
+                isRequired: isRequired,
+                param: param
+              }
+            })
           },
         )
-      }).join('\n\n'),
+      }).concat(enumNames.map(name => {
+        global.LOG(`Writing ${name} enum:`, this.knownEnums[name])
+        return Templatize.Instance().render(
+          'enumDefinition.txt',
+          {
+            enumName: name,
+            enumValues: this.knownEnums[name]
+          },
+        )
+      })).join('\n\n'),
       {flag: 'w'}
     )
   }
@@ -136,15 +153,8 @@ class OutputDefinition {
           'collectionsIndex.txt',
           Object.assign(
             {
-              importsStr: this.models
-                .map(
-                  m =>
-                    `const ${m.getCollectionName()} = require('./${m.getCollectionName()}.js')`,
-                )
-                .join('\n'),
               collectionNames: this.models
-                .map(m => `  ${m.getCollectionName()}`)
-                .join(',\n'),
+                .map(m => m.getCollectionName()),
               initDefinition: this.getInitDefinition(!!this.hooksPath)
             },
           ),
@@ -386,8 +396,12 @@ class OutputDefinition {
     const builtSchemaStr = loadSchemaToString(builtSchemaPath)
     global.LOG(`Loaded build schema from ${builtSchemaPath}`)
 
+    const enums = findEnumsInSchema(builtSchemaStr)
+
     // get our basic models
-    const models = schemaToModels(srcSchemaStr, builtSchemaStr)
+    // TODO: I don't love that we're passing enums down the chain here since it's only needed by the GeneratedModel constructor
+    //  but it was the fastest solution to get enums working. Refactor at some point?
+    const models = schemaToModels(srcSchemaStr, builtSchemaStr, enums)
 
     // apply the input types
     addQueriesToModels(builtSchemaStr, models)
@@ -414,7 +428,7 @@ class OutputDefinition {
 
     const inputTypes = getInputTypeDefinitions(builtSchemaStr)
 
-    return new OutputDefinition(models, inputTypes)
+    return new OutputDefinition(models, inputTypes, enums)
   }
 }
 

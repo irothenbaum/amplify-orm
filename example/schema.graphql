@@ -8,9 +8,17 @@ type Blog @model {
   posts: [Post] @hasMany
 }
 
+enum PostType {
+  OPINION
+  CURRENT_EVENTS
+  RESEARCH
+  OTHER
+}
+
 type Post @model {
   id: ID!
   title: String!
+  type: PostType!
   blog: Blog @belongsTo
   comments: [Comment] @hasMany
 }
