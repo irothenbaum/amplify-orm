@@ -77,7 +77,7 @@ function schemaToModels(schemaStr, builtSchemaStr, enums) {
 function getModelFromMatch(modelName, builtSchemaStr, enums) {
   global.LOG(`Parsing model ${modelName}`)
 
-  const reg = new RegExp(`type ${modelName} {\\s?([.\\sa-zA-Z0-9:!(,)\\[\\]]+)}`,'m')
+  const reg = new RegExp(`type ${modelName}[ @aws_api_key]* {\\s?([.\\sa-zA-Z0-9:!(,)\\[\\]]+)}`,'m')
   const matche = builtSchemaStr.match(reg)
 
   if (!matche) {
