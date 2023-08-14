@@ -27,6 +27,15 @@ class {{collectionName}} extends AbstractCollection {
       }
     })
 
+    {{#jsonFields.length}}
+    // automatically JSON Parse all AWSJSON fields
+    {{collectionName}}._jsonFields.forEach(field => {
+      if (Object.hasOwnProperty.call(obj, field) && typeof obj[field] === 'string') {
+        obj[field] = JSON.parse(obj[field])
+      }
+    })
+    {{/jsonFields.length}}
+
     // lastly, we apply our own custom query hooks to this payload if one is specified
     if (typeof {{collectionName}}.custom_afterFind === 'function') {
       return {{collectionName}}.custom_afterFind(obj)
@@ -47,5 +56,6 @@ class {{collectionName}} extends AbstractCollection {
 
 // this meta prop is used to call query hooks on associated models
 {{collectionName}}._complexFields = {{{complexFieldsMap}}}
+{{collectionName}}._jsonFields = [{{#jsonFields}}"{{.}}",{{/jsonFields}}]
 
 {{{fragmentsStr}}}

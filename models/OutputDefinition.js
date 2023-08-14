@@ -143,7 +143,7 @@ class OutputDefinition {
       path.join(this.outputDirectory, 'collections', 'index.js'),
       this._renderModule({
         GraphQLHelper: '../GQLQueryHelper',
-        ...(this.hooksPath ? {customHooks: '../customHooks'} : {}), // only load custome hooks if we have them
+        ...(this.hooksPath ? {customHooks: '../customHooks'} : {}), // only load custom hooks if we have them
           ...this.models
             .reduce((agr, m) => {
               agr[m.getCollectionName()] = `./${m.getCollectionName()}`
@@ -221,6 +221,7 @@ class OutputDefinition {
             agr[f] = model.fields[f]
             return agr
           }, {})),
+          jsonFields: model.jsonFields,
           queryDefinitions: model.queries
             .map(def => def.toFunctionDefinition(model.getCollectionName()))
             .join('\n'),

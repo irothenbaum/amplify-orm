@@ -178,3 +178,4 @@ By default, the exported collections use CommonJS syntax, Set the `useESM` prope
 - Support building output as an npm package
 - Still doing a lot of `.map().join('\n')`, but would like to move that into the template itself
   - e.g.: `{{#items}}{{.}}{{/items}}` instead of `items.join('\n')`
+- TESTS!!

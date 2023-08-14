@@ -27,4 +27,5 @@ type Comment @model {
   id: ID!
   post: Post @belongsTo
   content: String!
+  meta: AWSJSON
 }

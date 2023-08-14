@@ -16,12 +16,16 @@ class GeneratedModel {
     this.allFields = Object.keys(fields)
     this.primitiveFields = []
     this.complexFields = []
+    this.jsonFields = []
 
     const allPrimitiveTypes = primitiveTypes.concat(Object.keys(knownEnums))
 
     this.allFields.forEach(f => {
       // ignore if it's required or not when determining if its primitive
       allPrimitiveTypes.includes(fields[f].replace('!', '')) ? this.primitiveFields.push(f) : this.complexFields.push(f)
+      if (fields[f] === 'AWSJSON') {
+        this.jsonFields.push(f)
+      }
     })
 
     /** @type {Array<QueryDefinition>} */
