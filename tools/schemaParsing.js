@@ -153,7 +153,7 @@ function addQueriesOrMutationsToModels(type, schemaStr, models) {
   const match = reg.exec(schemaStr)
   const lines = match[1]
     .split('\n')
-    .map(queryDef => queryDef.replace('@aws_api_key', '').trim())
+    .map(queryDef => queryDef.replace('@aws_api_key', '').replace('@aws_cognito_user_pools', '').trim())
     .filter(v => !!v)
 
   const returnTypeToModel = models.reduce((agr, m) => {
