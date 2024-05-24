@@ -28,6 +28,8 @@ class QueryDefinition {
    */
   getFunctionName() {
     if (this.type === QueryDefinition.TYPE_QUERY_ITERATIVE) {
+      // TODO: this assumes every List query starts with the word "List", but that's not necessarily the case
+      //  especially if we allow custom queries to be associated to models
       return this.queryName.replace('list', 'iterate')
     }
     return this.queryName

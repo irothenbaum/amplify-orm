@@ -158,7 +158,11 @@ function addQueriesOrMutationsToModels(type, schemaStr, models) {
 
   const returnTypeToModel = models.reduce((agr, m) => {
     agr[m.name] = m
+    // a few different way model response types are/could be used
+    // TODO: this is basically a way to associate custom resolvers on a model so maybe this is also configurable?
+    //  i.e., devs can explicitly associate a Query or Mutation in schema.graphql to a collection
     agr[`Model${m.name}Connection`] = m
+    agr[`[${m.name}]`] = m
     return agr
   }, [])
 
