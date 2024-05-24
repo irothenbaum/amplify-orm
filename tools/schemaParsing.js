@@ -137,6 +137,11 @@ function addQueriesToModels(schemaStr, models) {
   addQueriesOrMutationsToModels('Mutation', schemaStr, models)
 }
 
+// Model Connection payloads take the form of {items: [], nextToken: string}
+function getModelConnectionNameFromModelName(modelName) {
+  return `Model${modelName}Connection`
+}
+
 /**
  * @param {string} type
  * @param {string} schemaStr
@@ -158,10 +163,11 @@ function addQueriesOrMutationsToModels(type, schemaStr, models) {
 
   const returnTypeToModel = models.reduce((agr, m) => {
     agr[m.name] = m
-    // a few different way model response types are/could be used
+    agr[getModelConnectionNameFromModelName(m.name)] = m
+
     // TODO: this is basically a way to associate custom resolvers on a model so maybe this is also configurable?
     //  i.e., devs can explicitly associate a Query or Mutation in schema.graphql to a collection
-    agr[`Model${m.name}Connection`] = m
+    //  for now we just include a common one: [MODEL_NAME]
     agr[`[${m.name}]`] = m
     return agr
   }, [])
@@ -202,9 +208,11 @@ function addQueriesOrMutationsToModels(type, schemaStr, models) {
       const queryType =
         type === 'Mutation'
           ? QueryDefinition.TYPE_MUTATION
-          : returnType === model.name
-          ? QueryDefinition.TYPE_QUERY_ONE
-          : QueryDefinition.TYPE_QUERY_LIST
+          // if it's returning a ModelConnection payload, then it's a list query
+          : returnType === getModelConnectionNameFromModelName(model.name)
+          ? QueryDefinition.TYPE_QUERY_LIST
+          // in all other cases, treat it like a simple Get
+          : QueryDefinition.TYPE_QUERY_ONE
 
       model.addQueryDefinition(
         new QueryDefinition(queryType, queryName, partsStr),
