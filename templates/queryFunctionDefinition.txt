@@ -14,8 +14,9 @@
 
   /**
    * @param { {{{inputType}}} } input
+   * @param {QueryOptions?} options
    * @returns {Promise<{{{returnType}}}>}
    */
-  static async {{functionName}}(input) {
-    return new this().{{functionName}}(input)
+  static async {{functionName}}(input, options) {
+    return new this().{{functionName}}(input, options)
   }
