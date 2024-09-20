@@ -2,59 +2,43 @@ const fs = require("fs")
 const path = require("path")
 const Mustache = require("mustache")
 
-let instance
+const TEMPLATE_PATH = path.join(__dirname, '..', 'templates')
+const _templateCache = {}
 
-class Templatize {
-  constructor() {
-    if (instance) {
-      throw new Error("Templatize is a singleton")
-    }
-    instance = this
-    this._templateCache = {}
-  }
-
-  /**
-   * @param {string} templateName
-   * @param {*} params
-   */
-  render(templateName, params) {
-    return Mustache.render(this.getTemplateStr(templateName), params)
-
-  }
-
-  /**
-   * @param {string} templateName
-   * @returns {string}
-   */
-  getTemplateStr(templateName) {
-    if (!this._templateCache[templateName]) {
-      const templatePath = Templatize.getTemplateFilePath(templateName)
-      if (!fs.existsSync(templatePath)) {
-        throw new Error(`Cannot find template file named ${templateName}`)
-      }
-
-      this._templateCache[templateName] = fs.readFileSync(templatePath).toString()
-    }
-    return this._templateCache[templateName]
-  }
-
-  static Instance() {
-    if (!instance) {
-      new Templatize()
-    }
-    return instance
-  }
-
-  /**
-   * @param {string} fileName
-   * @returns {string}
-   */
-  static getTemplateFilePath(fileName) {
-    return path.join(Templatize.TEMPLATE_PATH, fileName)
-
-  }
+/**
+ * @param {string} templateName
+ * @param {*} params
+ */
+function render(templateName, params) {
+  return Mustache.render(getTemplateStr(templateName), params)
 }
 
-Templatize.TEMPLATE_PATH = path.join(__dirname, '..', 'templates')
+/**
+ * @param {string} templateName
+ * @returns {string}
+ */
+function getTemplateStr(templateName) {
+  if (!_templateCache[templateName]) {
+    const templatePath = getTemplateFilePath(templateName)
+    if (!fs.existsSync(templatePath)) {
+      throw new Error(`Cannot find template file named ${templateName}`)
+    }
 
-module.exports = Templatize
+    _templateCache[templateName] = fs.readFileSync(templatePath).toString()
+  }
+  return _templateCache[templateName]
+}
+
+/**
+ * @param {string} fileName
+ * @returns {string}
+ */
+function getTemplateFilePath(fileName) {
+  return path.join(TEMPLATE_PATH, fileName)
+
+}
+
+module.exports = {
+  render,
+  getTemplateFilePath,
+}

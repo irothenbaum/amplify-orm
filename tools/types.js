@@ -13,6 +13,25 @@ These are for compile time types
  */
 
 /**
+ * @typedef CompiledAmplifyORMConfig
+ * @property {string} srcSchema -- required, path to src schema.graphql file
+ * @property {string} buildSchema -- required, path to build schema.graphql file
+ * @property {Object<string, *>} fragments -- fragments object
+ * @property {string|null} hooks -- path to hooks file
+ * @property {boolean} useESM -- if true, will use ESM syntax, defaults to false
+ * @property {Array<string>?} collections -- if included, will only build collections that are listed here
+ */
+
+/**
+ * @typedef {CompiledAmplifyORMConfig} AmplifyORMConfig
+ * @property {string|Object<string, *>?} fragments -- path to fragments file or the fragments themselves
+ * @property {string?} hooks
+ * @property {boolean?} useESM
+ * @property {boolean?} debug -- if true, will print debug statements
+ * @property {Array<string>?} collections
+ */
+
+/**
  * @typedef {Object<string, Object<string, function>>} CustomHooksDefinition
  *
  * Keyed by Model name, an object containing key:value pairs representing hookType:function

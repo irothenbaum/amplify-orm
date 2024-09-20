@@ -101,7 +101,7 @@ class OutputDefinition {
       path.join(this.outputDirectory, 'dynamicTypes.js'),
       inputTypeNames.map(name => {
         global.LOG(`Writing ${name} type:`, this.inputTypes[name])
-        return Templatize.Instance().render(
+        return Templatize.render(
           'typeDefinition.txt',
           {
             typeName: name,
@@ -117,7 +117,7 @@ class OutputDefinition {
         )
       }).concat(enumNames.map(name => {
         global.LOG(`Writing ${name} enum:`, this.knownEnums[name])
-        return Templatize.Instance().render(
+        return Templatize.render(
           'enumDefinition.txt',
           {
             enumName: name,
@@ -149,7 +149,7 @@ class OutputDefinition {
               agr[m.getCollectionName()] = `./${m.getCollectionName()}`
               return agr
             }, {})
-      }, Templatize.Instance().render(
+      }, Templatize.render(
           'collectionsIndex.txt',
           Object.assign(
             {
@@ -178,7 +178,7 @@ class OutputDefinition {
    * @returns {string}
    */
   getInitDefinition(hasHooks) {
-    return Templatize.Instance().render('initDefinition.txt', {
+    return Templatize.render('initDefinition.txt', {
       setHooksForCollections: hasHooks ? this.models
         .map(m => {
           return `  if (customHooks['${
@@ -212,7 +212,7 @@ class OutputDefinition {
           AbstractCollection: './AbstractCollection',
           'utilities': '../utilities',
         },
-      Templatize.Instance().render(
+      Templatize.render(
         'collection.txt',
         {
           modelName: model.name,
@@ -351,7 +351,7 @@ class OutputDefinition {
    */
   _renderModule(imports, code, exports) {
     global.LOG(`Creating module with imports/exports`, imports, exports)
-    return Templatize.Instance().render('genericModule.txt', {
+    return Templatize.render('genericModule.txt', {
         importsStr: this._getImportDefinition(imports),
         code: code,
         exportStr: this._getExportDefinition(exports)
@@ -385,24 +385,22 @@ class OutputDefinition {
   // Static functions
 
   /**
-   * @param {string} srcSchemaPath
-   * @param {string} builtSchemaPath
-   * @param {CustomFragmentsDefinition} fragments
+   * @param {CompiledAmplifyORMConfig} config
    * @return {OutputDefinition}
    */
-  static getFromSchema(srcSchemaPath, builtSchemaPath, fragments) {
+  static buildFromAmplifyORMConfig(config) {
     global.LOG(`Reading schema files`)
-    const srcSchemaStr = loadSchemaToString(srcSchemaPath)
-    global.LOG(`Loaded schema from ${srcSchemaPath}`)
-    const builtSchemaStr = loadSchemaToString(builtSchemaPath)
-    global.LOG(`Loaded build schema from ${builtSchemaPath}`)
+    const srcSchemaStr = loadSchemaToString(config.srcSchema)
+    global.LOG(`Loaded schema from ${config.srcSchema}`)
+    const builtSchemaStr = loadSchemaToString(config.buildSchema)
+    global.LOG(`Loaded build schema from ${config.buildSchema}`)
 
     const enums = findEnumsInSchema(builtSchemaStr)
 
     // get our basic models
     // TODO: I don't love that we're passing enums down the chain here since it's only needed by the GeneratedModel constructor
     //  but it was the fastest solution to get enums working. Refactor at some point?
-    const models = schemaToModels(srcSchemaStr, builtSchemaStr, enums)
+    let models = schemaToModels(srcSchemaStr, builtSchemaStr, enums)
 
     // apply the input types
     addQueriesToModels(builtSchemaStr, models)
@@ -411,7 +409,7 @@ class OutputDefinition {
     global.LOG(`Adding custom fragments and hooks to the models`)
     models.forEach(m => {
       global.LOG(`Checking model ${m.name}`)
-      const modelFragments = fragments[m.name]
+      const modelFragments = config.fragments[m.name]
 
       const customFragmentNames = modelFragments && Object.keys(modelFragments)
       if (customFragmentNames) {
@@ -428,6 +426,14 @@ class OutputDefinition {
     })
 
     const inputTypes = getInputTypeDefinitions(builtSchemaStr)
+
+    if (Array.isArray(config.collections) && config.collections.length) {
+      global.LOG(`Filtering models to only include ${config.collections.length} collections`)
+      models = models.filter(m => config.collections.includes(m.name))
+
+      // TODO: Maybe rather than just filtering the collections, we should also filter any meta data specific to those collections
+      //  such as: input types, response payloads, connection fields on associated collections, etc.
+    }
 
     return new OutputDefinition(models, inputTypes, enums)
   }

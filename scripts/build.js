@@ -11,31 +11,31 @@ global.LOG = function () {
 
 async function build() {
   const configPath = path.resolve(process.cwd(), process.argv[2])
+  const baseDir = path.dirname(configPath)
   console.log(`Loading config from: "${configPath}"`)
   const config = require(configPath)
   verbose = !!config.debug
 
   global.LOG(`Using config: `, config)
 
-  const baseDir = path.dirname(configPath)
-
-  const def = OutputDefinition.getFromSchema(
-    path.resolve(baseDir, config.srcSchema),
-    path.resolve(baseDir, config.buildSchema),
-    typeof config.fragments === 'string'
+  /** @typedef CompiledAmplifyORMConfig */
+  const formattedConfig = {
+    srcSchema: path.resolve(baseDir, config.srcSchema),
+    buildSchema: path.resolve(baseDir, config.buildSchema),
+    fragments: (typeof config.fragments === 'string'
       ? require(path.resolve(baseDir, config.fragments))
-      : config.fragments,
-  )
-
-  if (!!config.hooks && typeof config.hooks !== 'string') {
-    throw new Error('hooks prop must be a file path')
+      : config.fragments || {}),
+    hooks: config.hooks && typeof config.hooks === 'string' ? path.resolve(baseDir, config.hooks) : null,
+    useESM: config.useESM || false,
   }
 
-  if (config.hooks) {
-    def.setHooksPaths(path.resolve(baseDir, config.hooks))
+  const def = OutputDefinition.buildFromAmplifyORMConfig(formattedConfig)
+
+  if (formattedConfig.hooks) {
+    def.setHooksPaths(path.resolve(baseDir, formattedConfig.hooks))
   }
 
-  def.setUseEMS(config.useESM || false)
+  def.setUseEMS(formattedConfig.useESM)
 
   global.LOG(`Built OutputDefinition:`, def)
 

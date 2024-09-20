@@ -109,10 +109,10 @@ class GeneratedModel {
     return Object.entries(this.fragments).map(
       ([fragmentName, fields]) => {
         // we return the fragmentConstant definition to be used in Collection
-        return Templatize.Instance().render(
+        return Templatize.render(
           'fragmentConstant.txt',
           {
-            fragmentGQL: Templatize.Instance().render(
+            fragmentGQL: Templatize.render(
               'fragmentGQL.txt',
               {
                 // the actual graphql fragment prepends the model name
