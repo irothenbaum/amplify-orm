@@ -27,6 +27,7 @@ async function build() {
       : config.fragments || {}),
     hooks: config.hooks && typeof config.hooks === 'string' ? path.resolve(baseDir, config.hooks) : null,
     useESM: config.useESM || false,
+    collections: config.collections || null,
   }
 
   const def = OutputDefinition.buildFromAmplifyORMConfig(formattedConfig)

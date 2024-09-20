@@ -156,8 +156,14 @@ function fieldsListToString(modelName, fieldsList, allModels, depth = 1) {
 
         return fieldNames
           .map(connectionName => {
+            // if the model is not in allModels, it's because it was not included in the `collections` array in config
             const connectionType =
-              allModels[modelName].fields[connectionName]
+              allModels[modelName]?.fields[connectionName]
+
+            if (!connectionType) {
+              global.LOG(`Associated model "${modelName}" not included, skipping connection "${connectionName}"`)
+              return null
+            }
 
             global.LOG(`Building complex field "${connectionName}" for "${modelName}" with type: ${connectionType}`)
 
@@ -196,6 +202,7 @@ function fieldsListToString(modelName, fieldsList, allModels, depth = 1) {
               )}\n${spaces}}`
             }
           })
+          .filter(line => !!line)
           .join('\n')
       }
     })

@@ -45,7 +45,7 @@ class QueryDefinition {
     // if any params are required, then the input object is required
     const inputIsRequired = Object.values(this.params).some(type => type.includes('!'))
 
-    return Templatize.Instance().render(
+    return Templatize.render(
       'queryFunctionDefinition.txt',
       {
         collectionName: collectionName,

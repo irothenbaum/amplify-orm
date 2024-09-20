@@ -19,7 +19,7 @@ These are for compile time types
  * @property {Object<string, *>} fragments -- fragments object
  * @property {string|null} hooks -- path to hooks file
  * @property {boolean} useESM -- if true, will use ESM syntax, defaults to false
- * @property {Array<string>?} collections -- if included, will only build collections that are listed here
+ * @property {Array<string>|null} collections -- if included, will only build collections that are listed here
  */
 
 /**
