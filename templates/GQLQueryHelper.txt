@@ -1,7 +1,7 @@
 /**
  * Auth callback to generate a new AWSAppSyncClient.
  * @callback AWSAppSyncClientFactory
- * @returns {AWSAppSyncClient}
+ * @returns {AWSAppSyncClient|Promise<AWSAppSyncClient>}
  */
 
 /**
@@ -104,7 +104,7 @@ class GQLQueryHelper {
       }
 
       try {
-        const client = that.__ensureClient()
+        const client = await that.__ensureClient()
         let response = await client.query({query: queryFormatted, variables: {
             ...params,
             nextToken: this.nextToken,
