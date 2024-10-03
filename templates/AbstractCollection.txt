@@ -97,7 +97,7 @@ class AbstractCollection {
       inputs,
     )
 
-    return this.constructor.afterFind(retVal)
+    return retVal ? this.constructor.afterFind(retVal) : retVal
   }
 
   /**
@@ -115,7 +115,7 @@ class AbstractCollection {
       inputs,
     )
 
-    return this.constructor.afterFind(retVal)
+    return retVal ? this.constructor.afterFind(retVal) : retVal
   }
 
   /**

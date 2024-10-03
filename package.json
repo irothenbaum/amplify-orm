@@ -1,7 +1,7 @@
 {
   "name": "@rxr/amplify-orm",
-  "version": "1.3.3",
-  "description": "",
+  "version": "1.3.4",
+  "description": "A library that generates an ORM using your Amplify/AppSync schema.",
   "main": "index.js",
   "keywords": ["amplify", "orm", "aws", "appsync", "graphql"],
   "homepage": "https://github.com/irothenbaum/amplify-orm#readme",

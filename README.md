@@ -172,6 +172,7 @@ By default, the exported collections use CommonJS syntax, Set the `useESM` prope
 
 ### TODO:
 - ID input types should be treated like strings
+- Be able to somehow run queries that do not have arbitrary response payloads (for queries not related to a Model/Collection)
 - Output folder should be specified in the config file, not the second CLI param
 - Support building output as an npm package
 - Still doing a lot of `.map().join('\n')`, but would like to move that into the template itself
