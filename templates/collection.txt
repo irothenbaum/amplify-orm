@@ -10,6 +10,11 @@ class {{collectionName}} extends AbstractCollection {
    * @returns {*}
    */
   static afterFind(obj) {
+    // if we couldn't find any data, just return early -- nothing to format
+    if (!obj) {
+      return obj
+    }
+
     Object.entries({{collectionName}}._complexFields).forEach(([field, fieldType]) => {
       // if this connected field is included in our response object
       if (Object.hasOwnProperty.call(obj, field)) {
