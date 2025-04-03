@@ -10,24 +10,13 @@
  * @property {number} maxResults
  */
 
-const DEFAULT_PARAMS = {
+const DEFAULT_LIST_PARAMS = {
   nextToken: null,
-  limit: 10000,
+  limit: 2000, // this is an app sync hard limit
 }
-const DEFAULT_MAXIMUM_ITERATIONS = 20
-const DEFAULT_MAXIMUM_RESULTS = 1000000
 
-/**
- * @param {*} resp
- * @throws {Error}
- */
-function handleQueryException(resp) {
-  if (Array.isArray(resp.errors) && resp.errors.length > 0) {
-    throw new Error(resp.errors[0].message)
-  } else {
-    throw resp
-  }
-}
+const DEFAULT_MAXIMUM_ITERATIONS = 1000
+const DEFAULT_MAXIMUM_RESULTS = 2000000 // (default limit * default iterations)
 
 let instance
 
@@ -47,20 +36,6 @@ class GQLQueryHelper {
   }
 
   /**
-   * @param {*?} config
-   * @returns {GQLQueryHelper}
-   */
-  static Instance(config) {
-    if (!instance) {
-      if (!config) {
-        throw new Error('First call to Instance() requires a config')
-      }
-      return new GQLQueryHelper(config)
-    }
-    return instance
-  }
-
-  /**
    * @param {string} mutation
    * @param {*} params
    * @returns {Promise<*>}
@@ -68,7 +43,7 @@ class GQLQueryHelper {
   async executeMutation(mutation, params) {
     try {
       const client = await this.__ensureClient()
-      let response = await client.mutate({mutation: this._formatQueryString(mutation), variables: params})
+      const response = await client.mutate({mutation: formatQueryString(mutation), variables: params})
       return new GQLResponse(response).payload
     } catch (resp) {
       handleQueryException(resp)
@@ -82,7 +57,7 @@ class GQLQueryHelper {
   async queryOnce(query, params) {
     try {
       const client = await this.__ensureClient()
-      let response = await client.query({query: this._formatQueryString(query), variables: params})
+      const response = await client.query({query: formatQueryString(query), variables: params})
       return new GQLResponse(response).payload
     } catch (resp) {
       handleQueryException(resp)
@@ -97,7 +72,11 @@ class GQLQueryHelper {
    */
   iterativeQuery(query, params, afterFind) {
     const that = this
-    const queryFormatted = this._formatQueryString(query)
+    const queryFormatted = formatQueryString(query)
+
+    // merge this params with our defaults
+    params = Object.assign({}, DEFAULT_LIST_PARAMS, params)
+
     return new GQLQueryIterator(async function () {
       if (this.hasCompleted) {
         return []
@@ -105,21 +84,23 @@ class GQLQueryHelper {
 
       try {
         const client = await that.__ensureClient()
-        let response = await client.query({query: queryFormatted, variables: {
+        const response = await client.query({
+          query: queryFormatted,
+          variables: {
             ...params,
             nextToken: this.nextToken,
-          }})
+          },
+        })
         const resp = new GQLResponse(response)
         this.nextToken = resp.nextToken
 
-        if (!this.nextToken) {
+        // if there is no next token or the next token didn't change, then we're done
+        if (!this.nextToken || this.nextToken === params.nextToken) {
           this.hasCompleted = true
         }
 
         // if we were passed an after find function, we should invoke it
-        return typeof afterFind === 'function'
-          ? await afterFind(resp.payload)
-          : resp.payload
+        return typeof afterFind === 'function' ? await afterFind(resp.payload) : resp.payload
       } catch (resp) {
         handleQueryException(resp)
       }
@@ -134,63 +115,22 @@ class GQLQueryHelper {
    * @returns {Promise<Array<*>>}
    */
   async queryAll(query, params, options) {
-    const client = await this.__ensureClient()
-    let maximumResults =
-      (options && options.maxResults) || DEFAULT_MAXIMUM_RESULTS
-    let maximumIterations =
-      (options && options.maxIterations) || DEFAULT_MAXIMUM_ITERATIONS
+    let maximumResults = (options && options.maxResults) || DEFAULT_MAXIMUM_RESULTS
+    let maximumIterations = (options && options.maxIterations) || DEFAULT_MAXIMUM_ITERATIONS
 
     let result = []
 
-    // merge this params with our defaults
-    params = Object.assign({}, DEFAULT_PARAMS, params)
+    const iterator = await this.iterativeQuery(query, params)
+    do {
+      try {
+        const items = await iterator.next()
+        result = result.concat(items)
+      } catch (err) {
+        handleQueryException(err)
+      }
+    } while (!iterator.hasCompleted && result.length < maximumResults && --maximumIterations > 0)
 
-    const queryFormatted = this._formatQueryString(query)
-    try {
-      do {
-        // execute our query
-        let responseRaw = await client.query({query: queryFormatted, variables: params})
-        let response = new GQLResponse(responseRaw)
-
-        // store our items into our results array
-        if (response.hasItems()) {
-          result = result.concat(response.payload)
-        }
-
-        // TODO: In order for nextToken to work, it must be listed as a param to the query definition
-        //  we should find some way to check for this before blindly trying to repeat a query which may not
-        //  actually be capable to follow nextTokens
-
-        // set our next token
-        // eslint-disable-next-line require-atomic-updates
-        params.nextToken = response.nextToken
-
-        // decrement our depth counter
-        maximumIterations--
-
-        // repeat for as long as there's a next token && we haven't exceeded the max depth && we haven't reached our result count
-      } while (
-        params.nextToken &&
-        maximumIterations > 0 &&
-        result.length < maximumResults
-      )
-    } catch (resp) {
-      handleQueryException(resp)
-    }
     return result.slice(0, maximumResults)
-  }
-
-  /**
-   * @param {string} query
-   * @returns {any}
-   * @private
-   */
-  _formatQueryString(query) {
-    if (typeof query === 'string') {
-      return gql`${query}`
-    } else {
-      return query
-    }
   }
 
   // ---------------------------------------------------------------
@@ -203,5 +143,40 @@ class GQLQueryHelper {
   static init(ensureClient) {
     return new GQLQueryHelper(ensureClient)
   }
+
+  /**
+   * @returns {GQLQueryHelper}
+   */
+  static Instance() {
+    if (!instance) {
+      throw new Error('GQLQueryHelper has not been initialized')
+    }
+    return instance
+  }
 }
 
+/**
+ * @param {*} resp
+ * @throws {Error}
+ */
+function handleQueryException(resp) {
+  if (Array.isArray(resp.errors) && resp.errors.length > 0) {
+    throw new Error(resp.errors[0].message)
+  } else {
+    throw resp
+  }
+}
+
+/**
+ * @param {string} query
+ * @returns {any}
+ */
+function formatQueryString(query) {
+  if (typeof query === 'string') {
+    return gql`
+      ${query}
+    `
+  } else {
+    return query
+  }
+}

@@ -178,3 +178,9 @@ By default, the exported collections use CommonJS syntax, Set the `useESM` prope
 - Still doing a lot of `.map().join('\n')`, but would like to move that into the template itself
   - e.g.: `{{#items}}{{.}}{{/items}}` instead of `items.join('\n')`
 - TESTS!!
+-  Fetching nested complex fields does not work. For example:
+
+VendorService: [
+    {details: {image: ['key', 'bucket', 'region']}}
+]
+
