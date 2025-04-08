@@ -73,6 +73,16 @@ class GQLQueryHelper {
   iterativeQuery(query, params, afterFind) {
     const that = this
     const queryFormatted = formatQueryString(query)
+    const queryUsesNextToken = queryHasNextTokenField(queryFormatted)
+    const querySelectsToken = querySelectsNextToken(queryFormatted)
+
+    // If you query next token, you must select next token and vice versa
+    // but if both are missing it's fine, we'll just return the first set of results
+    if (querySelectsToken && !queryUsesNextToken) {
+      throw new Error('"nextToken" missing from params')
+    } else if (queryUsesNextToken && !querySelectsToken) {
+      throw new Error('"nextToken" missing from selection')
+    }
 
     // merge this params with our defaults
     params = Object.assign({}, DEFAULT_LIST_PARAMS, params)
@@ -94,8 +104,8 @@ class GQLQueryHelper {
         const resp = new GQLResponse(response)
         this.nextToken = resp.nextToken
 
-        // if there is no next token or the next token didn't change, then we're done
-        if (!this.nextToken || this.nextToken === params.nextToken) {
+        // if there is no next token or the next token isn't used
+        if (!this.nextToken || !queryUsesNextToken) {
           this.hasCompleted = true
         }
 
@@ -169,7 +179,7 @@ function handleQueryException(resp) {
 
 /**
  * @param {string} query
- * @returns {any}
+ * @returns {DocumentNode}
  */
 function formatQueryString(query) {
   if (typeof query === 'string') {
@@ -179,4 +189,46 @@ function formatQueryString(query) {
   } else {
     return query
   }
+}
+
+/**
+ * @param {DocumentNode} queryDoc
+ * @returns {boolean}
+ */
+function queryHasNextTokenField(queryDoc) {
+  const operationDef = queryDoc.definitions.find(def => def.kind === 'OperationDefinition')
+
+  if (!operationDef || operationDef.kind !== 'OperationDefinition') {
+    return false
+  }
+
+  return (
+    Array.isArray(operationDef.variableDefinitions) &&
+    operationDef.variableDefinitions.some(varDef => varDef.variable.name.value === 'nextToken')
+  )
+}
+
+/**
+ * @param {DocumentNode} queryDoc
+ * @returns {boolean}
+ */
+function querySelectsNextToken(queryDoc) {
+  const selectionContainsNextToken = selections => {
+    for (const sel of selections) {
+      if (sel.kind === 'Field') {
+        if (sel.name.value === 'nextToken') {
+          return true
+        }
+
+        if (sel.selectionSet && selectionContainsNextToken(sel.selectionSet.selections)) {
+          return true
+        }
+      }
+    }
+
+    return false
+  }
+
+  const operationDef = queryDoc.definitions.find(def => def.kind === 'OperationDefinition')
+  return selectionContainsNextToken(operationDef.selectionSet.selections)
 }
