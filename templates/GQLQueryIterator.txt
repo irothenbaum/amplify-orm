@@ -5,6 +5,7 @@ class GQLQueryIterator {
   constructor(nextFunc) {
     this.nextToken = undefined
     this.hasCompleted = false
+    this.iterations = 0
     this.next = nextFunc.bind(this)
   }
 }
