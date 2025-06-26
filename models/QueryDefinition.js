@@ -59,7 +59,7 @@ class QueryDefinition {
             
             return `${param}${isRequired ? '' : '?'}: ${type.replace('!', '')}`
           },
-        ).join(', ')}${inputIsRequired ? '' : '?'}}`,
+        ).join(', ')}}${inputIsRequired ? '' : '?'}`,
         internalFunction: typeToInternalFunction[this.type],
         returnType: typeToReturnType[this.type],
       },
