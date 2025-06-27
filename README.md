@@ -171,6 +171,7 @@ Notice the `one to many` association between employer and products is handled au
 By default, the exported collections use CommonJS syntax, Set the `useESM` property to `true` in the config file to enable ESM syntax.
 
 ### TODO:
+- TypeScript Support
 - ID input types should be treated like strings
 - Be able to somehow run queries that do not have arbitrary response payloads (for queries not related to a Model/Collection)
 - Output folder should be specified in the config file, not the second CLI param

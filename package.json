@@ -1,6 +1,6 @@
 {
   "name": "@rxr/amplify-orm",
-  "version": "1.4.2",
+  "version": "1.4.3",
   "description": "A library that generates an ORM using your Amplify/AppSync schema.",
   "main": "index.js",
   "keywords": ["amplify", "orm", "aws", "appsync", "graphql"],
@@ -10,6 +10,7 @@
     "url": "https://github.com/irothenbaum/amplify-orm"
   },
   "scripts": {
+    "build": "npx rollup scripts/build.js --file scripts/build.cjs --format cjs",
     "test": "echo \"Error: no test specified\"",
     "example": "node scripts/build.js example/amplify-orm.config.js build"
   },
@@ -20,6 +21,7 @@
   },
   "devDependencies": {
     "eslint": "^8.6.0",
-    "prettier": "^2.5.1"
+    "prettier": "^2.5.1",
+    "rollup": "^4.38.0"
   }
 }
