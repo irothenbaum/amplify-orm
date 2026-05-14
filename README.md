@@ -172,6 +172,7 @@ By default, the exported collections use CommonJS syntax, Set the `useESM` prope
 
 ### TODO:
 - TypeScript Support
+- If after find hooks return nothing, throw an error otherwise weird unobvious errors occur
 - ID input types should be treated like strings
 - Be able to somehow run queries that do not have arbitrary response payloads (for queries not related to a Model/Collection)
 - Output folder should be specified in the config file, not the second CLI param
